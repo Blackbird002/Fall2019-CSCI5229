@@ -14,6 +14,9 @@ condition ? value_if_true : value_if_false
 
 Compile with (Windows):
 gcc -O3 -Wall -o lorenz lorenz.c -lglut32cu -lglu32 -lopengl32
+
+The reason I'm generating an array of coordinates is that I want
+to use GL_LINE_STRIP - requence of line segments
 */
 
 #include <stdio.h>
@@ -23,6 +26,7 @@ gcc -O3 -Wall -o lorenz lorenz.c -lglut32cu -lglu32 -lopengl32
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
+#include <stdbool.h>
 #endif
 
 // ----------------------------------------------------------
@@ -33,9 +37,13 @@ int rotate_x = 45;
 double dim=50;   // Dimension of orthogonal box
 
 /*  Lorenz Parameters  */
-double s  = 10.0;
-double b  = (8.0/3.0);
-double r  = 28.0;
+double sigma  = 10.0;
+double beta  = (8.0/3.0);
+double rho  = 28.0;
+
+bool changeS = false;
+bool changeB = false;
+bool changeR = false;
 
 GLdouble lorenzPoints[100000][3];
 
@@ -53,6 +61,8 @@ void init();
 void key(unsigned char ch,int x,int y);
 void genLorenz();
 void drawLorenz();
+void theMenu(int value);
+void redoLerenz();
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -84,12 +94,49 @@ static void special(int k, int x, int y)
 }
 
 // ----------------------------------------------------------
+// theMenu() Callback function
+// ----------------------------------------------------------
+void theMenu(int value){
+  if(value == 1){
+    changeS = true;
+    changeB = false;
+    changeR = false;
+  }else if(value == 2){
+    changeS = false;
+    changeB = true;
+    changeR = false;
+  }else if(value == 3){
+    changeS = false;
+    changeB = false;
+    changeR = true;
+  }else if(value == 4){
+    exit(0);
+  }
+}
+
+// ----------------------------------------------------------
 // key() Callback function
 // ----------------------------------------------------------
 void key(unsigned char ch,int x,int y){
   //  Exit on ESC
-  if (ch == 27)
+  if (ch == 27){
     exit(0);
+  }else if(ch == '='){
+    if(changeS)
+      sigma += 0.1;
+    else if(changeB)
+      beta += 0.1;
+    else if(changeR)
+      rho += 0.1;
+  }else if(ch == '-'){
+    if(changeS)
+      sigma -= 0.1;
+    else if(changeB)
+      beta -= 0.1;
+    else if(changeR)
+      rho -= 0.1;
+  }
+  redoLerenz();
     
   //  Tell GLUT it is necessary to redisplay the scene
   glutPostRedisplay();
@@ -99,6 +146,16 @@ void key(unsigned char ch,int x,int y){
 // init() function
 // ----------------------------------------------------------
 void init(){
+  //Right click menu
+  int menuId = glutCreateMenu(theMenu);
+  glutSetMenu(menuId);
+  glutAddMenuEntry("Change Sigma", 1);
+  glutAddMenuEntry("Change Beta", 2);
+  glutAddMenuEntry("Change Rho", 3);
+  glutAddMenuEntry("Quit", 4);
+
+  // Let the menu respond on the right mouse button
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
   //  Clear values for the color buffers (background color)
   glClearColor(0.1f, 0.1f, 0.1f, 0.0);  //Dark Gray
@@ -126,10 +183,11 @@ void display(){
   //  Display rotation angles
   glColor3f(1,1,1);
   glWindowPos2i(5,5);
-  Print("Angle X= %d",rotate_x);
+  //Print("Angle X= %d",rotate_x);
+  Print("Sigma = %1.1f  Beta = %1.1f  Rho = %1.1f", sigma, beta, rho);
 
-  glWindowPos2i(5,25);
-  Print("Angle Y= %d",rotate_y);
+  //glWindowPos2i(5,25);
+  //Print("Angle Y= %d",rotate_y);
 
   // Force the execution of queued commands
   glFlush();
@@ -169,11 +227,18 @@ void drawAxisLabels(){
 
 void drawLorenz(){
   glBegin(GL_LINE_STRIP);
-    for (int i=0;i<100000;i++)
+    glLineWidth(2);
+    glColor3f(1,1,1);
+    for (int i=0;i<100000;i++){
       glVertex3d(lorenzPoints[i][0], lorenzPoints[i][1], lorenzPoints[i][2]);
+    }
   glEnd();
 }
 
+void redoLerenz(){
+  genLorenz();
+  drawLorenz();
+}
 
 // Convenience function for text
 #define LEN 8192  //  Maximum amount of text
@@ -230,9 +295,9 @@ void genLorenz(){
   *  Explicit Euler integration
   */
   for (int i=0;i<100000;i++){
-    dx = s*(y-x);
-    dy = x*(r-z)-y;
-    dz = x*y - b*z;
+    dx = sigma*(y-x);
+    dy = x*(rho-z)-y;
+    dz = x*y - beta*z;
     x += dt*dx;
     y += dt*dy;
     z += dt*dz;
@@ -241,6 +306,7 @@ void genLorenz(){
     lorenzPoints[i][0] = x;
     lorenzPoints[i][1] = y;
     lorenzPoints[i][2] = z;
+
 
     //printf("%5d %8.3f %8.3f %8.3f\n",i+1,x,y,z);
   }
