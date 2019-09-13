@@ -3,16 +3,23 @@ Use keyboard arrow keys to spin the axis lines
 (left/right about the y axis)
 (up/down about the x axis)
 
+Key bindings:
+  c     - don't draw cube
+  ESC   - Exit
+Press 
+
 Callbacks in C:
 -function that is passed as an argument to another function
 
-Compile with:
+Ternary Operator
+condition ? value_if_true : value_if_false
+
+Compile with (Windows):
 gcc -O3 -Wall -o 3DAxis 3DAxis.c -lglut32cu -lglu32 -lopengl32
 */
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <math.h>
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -23,8 +30,10 @@ gcc -O3 -Wall -o 3DAxis 3DAxis.c -lglut32cu -lglu32 -lopengl32
 // ----------------------------------------------------------
 // Global Variables
 // ----------------------------------------------------------
-double rotate_y = -45.0;
-double rotate_x = 45.0;
+int rotate_y = -45;
+int rotate_x = 45;
+double dim=2;   // Dimension of orthogonal box
+int cube = 1;
 
 // ----------------------------------------------------------
 // Function Prototypes
@@ -35,7 +44,10 @@ void idle();
 void Print(const char* format , ...);
 static void special(int k, int x, int y);
 void drawAxisLines();
+void drawAxisLabels();
+void drawCube();
 void init();
+void key(unsigned char ch,int x,int y);
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -58,7 +70,27 @@ static void special(int k, int x, int y)
   default:
     return;
   }
+  //  Keep angles to +/-360 degrees
+  rotate_x %= 360;
+  rotate_y %= 360;
+
   // Marks the current window as needing to be redisplayed
+  glutPostRedisplay();
+}
+
+// ----------------------------------------------------------
+// key() Callback function
+// ----------------------------------------------------------
+void key(unsigned char ch,int x,int y){
+  //  Exit on ESC
+  if (ch == 27)
+    exit(0);
+  //  Reset view angle
+  else if (ch == 'c'){
+    cube = (cube == 1) ? 0 : 1;
+  }
+    
+  //  Tell GLUT it is necessary to redisplay the scene
   glutPostRedisplay();
 }
 
@@ -87,14 +119,21 @@ void display(){
   glRotatef(rotate_y, 0.0, 1.0, 0.0 );  //y coordinate
 
   drawAxisLines();
+  drawAxisLabels();
+  if(cube == 1)
+    drawCube();
 
   //  Display rotation angles
   glColor3f(1,1,1);
   glWindowPos2i(5,5);
-  Print("Angle X= %.1f",rotate_x);
+  Print("Angle X= %d",rotate_x);
+
+  if(cube == 1){
+    Print("    Cube on!");
+  }
 
   glWindowPos2i(5,25);
-  Print("Angle Y= %.1f",rotate_y);
+  Print("Angle Y= %d",rotate_y);
 
   // Force the execution of queued commands
   glFlush();
@@ -108,20 +147,71 @@ void drawAxisLines(){
   glBegin(GL_LINES);
   glColor3f(1, 0, 0); //Red
   glVertex3f(0, 0, 0);
-  glVertex3f(0.5, 0, 0);
+  glVertex3f(1, 0, 0);
 
   // Y Axis line
   glColor3f(0, 1, 0); //Green
   glVertex3f(0, 0, 0);
-  glVertex3f(0, 0.5, 0);
+  glVertex3f(0, 1, 0);
 
   // Z Axis line
   glColor3f(0, 0, 1); //Blue
   glVertex3f(0, 0, 0);
-  glVertex3f(0, 0, 0.5);
+  glVertex3f(0, 0, 1);
   glEnd();
 }
 
+void drawAxisLabels(){
+  glColor3f(1, 1, 1); //White
+  glRasterPos3d(1.05,0,0);
+  Print("X");
+  glRasterPos3d(0,1.05,0);
+  Print("Y");
+  glRasterPos3d(0,0,1.05);
+  Print("Z");
+}
+
+void drawCube(){
+  glColor3f(1,1,1);
+  glPointSize(10);
+  glBegin(GL_LINES);
+  glVertex3d(0.5,0.5,0.5);
+  glVertex3d(0.5,0.5,-0.5);
+
+  glVertex3d(0.5,0.5,-0.5);
+  glVertex3d(0.5,-0.5,-0.5);
+
+  glVertex3d(0.5,-0.5,-0.5);
+  glVertex3d(0.5,-0.5,0.5);
+
+  glVertex3d(0.5,-0.5,0.5);
+  glVertex3d(0.5,0.5,0.5);
+
+  glVertex3d(0.5,0.5,0.5);
+  glVertex3d(-0.5,0.5,0.5);
+
+  glVertex3d(-0.5,0.5,0.5);
+  glVertex3d(-0.5,-0.5,0.5);
+
+  glVertex3d(-0.5,-0.5,0.5);
+  glVertex3d(0.5,-0.5,0.5);
+
+  glVertex3d(-0.5,0.5,0.5);
+  glVertex3d(-0.5,0.5,-0.5);
+
+  glVertex3d(-0.5,0.5,-0.5);
+  glVertex3d(0.5,0.5,-0.5);
+
+  glVertex3d(-0.5,0.5,-0.5);
+  glVertex3d(-0.5,-0.5,-0.5);
+
+  glVertex3d(-0.5,-0.5,-0.5);
+  glVertex3d(-0.5,-0.5,0.5);
+
+  glVertex3d(-0.5,-0.5,-0.5);
+  glVertex3d(0.5,-0.5,-0.5);
+  glEnd();
+}
 
 // Convenience function for text
 #define LEN 8192  //  Maximum amount of text
@@ -154,7 +244,7 @@ void reshape(int width,int height)
    //  Set projection to identity
    glLoadIdentity();
    //  Orthogonal projection:  unit cube adjusted for aspect ratio
-   glOrtho(-w2h,+w2h, -1.0,+1.0, -1.0,+1.0);
+   glOrtho(-dim*w2h,+dim*w2h, -dim,+dim, -dim,+dim);
    //  Select model view matrix
    glMatrixMode(GL_MODELVIEW);
    //  Set model view to identity
@@ -188,7 +278,8 @@ int main(int argc, char* argv[]){
   glutDisplayFunc(display);
   glutIdleFunc(idle);
   glutReshapeFunc(reshape);  //Reshaping
-  glutSpecialFunc(special); //Keyboard callback
+  glutSpecialFunc(special); 
+  glutKeyboardFunc(key);
 
   // Initialization
   init();
