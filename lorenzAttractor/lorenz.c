@@ -1,10 +1,15 @@
 /*
-Use keyboard arrow keys to spin the axis lines
+Use keyboard arrow keys to spin
 (left/right about the y axis)
 (up/down about the x axis)
 
 Key bindings:
   ESC   - Exit
+
+Right click inside of the windows to see options to change:
+  1 - Sigma
+  2 - Beta
+  3 - Rho
 
 Callbacks in C:
 -function that is passed as an argument to another function
@@ -21,6 +26,7 @@ to use GL_LINE_STRIP - requence of line segments
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -34,7 +40,7 @@ to use GL_LINE_STRIP - requence of line segments
 // ----------------------------------------------------------
 int rotate_y = -45;
 int rotate_x = 45;
-double dim=50;   // Dimension of orthogonal box
+double dim= 50;   // Dimension of orthogonal box
 
 /*  Lorenz Parameters  */
 double sigma  = 10.0;
@@ -44,6 +50,7 @@ double rho  = 28.0;
 bool changeS = false;
 bool changeB = false;
 bool changeR = false;
+int STEPS = 100000;
 
 GLdouble lorenzPoints[100000][3];
 
@@ -63,6 +70,8 @@ void genLorenz();
 void drawLorenz();
 void theMenu(int value);
 void redoLerenz();
+void lorenzSimulation();
+void spectral_color(double *r,double *g,double *b,double l);
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -71,16 +80,16 @@ static void special(int k, int x, int y)
 {
   switch (k) {
   case GLUT_KEY_UP:
-    rotate_x -= 2.0;
+    rotate_x -= 5.0;
     break;
   case GLUT_KEY_DOWN:
-    rotate_x += 2.0;
+    rotate_x += 5.0;
     break;
   case GLUT_KEY_LEFT:
-    rotate_y -= 2.0;
+    rotate_y -= 5.0;
     break;
   case GLUT_KEY_RIGHT:
-    rotate_y += 2.0;
+    rotate_y += 5.0;
     break;
   default:
     return;
@@ -186,6 +195,14 @@ void display(){
   //Print("Angle X= %d",rotate_x);
   Print("Sigma = %1.1f  Beta = %1.1f  Rho = %1.1f", sigma, beta, rho);
 
+  if(changeS){
+    Print("   Changing Sigma mode");
+  }else if (changeB){
+    Print("   Changing Beta mode");
+  }else if(changeR){
+    Print("   Changing Sigma mode");
+  }
+
   //glWindowPos2i(5,25);
   //Print("Angle Y= %d",rotate_y);
 
@@ -226,11 +243,17 @@ void drawAxisLabels(){
 }
 
 void drawLorenz(){
+  double r,g,b = 0;
+  double waveL = 400; //380 - 780
   glBegin(GL_LINE_STRIP);
     glLineWidth(2);
-    glColor3f(1,1,1);
-    for (int i=0;i<100000;i++){
+    for (int i=0;i<STEPS;i++){
+      if(waveL > 600)
+        waveL = 380;
+      spectral_color(&r,&g,&b,waveL);
+      glColor3d(r,g,b);
       glVertex3d(lorenzPoints[i][0], lorenzPoints[i][1], lorenzPoints[i][2]);
+      waveL += 0.01;
     }
   glEnd();
 }
@@ -238,6 +261,10 @@ void drawLorenz(){
 void redoLerenz(){
   genLorenz();
   drawLorenz();
+}
+
+void lorenzSimulation(){
+
 }
 
 // Convenience function for text
@@ -294,7 +321,7 @@ void genLorenz(){
   *  Integrate 50,000 steps (50 time units with dt = 0.001)
   *  Explicit Euler integration
   */
-  for (int i=0;i<100000;i++){
+  for (int i=0;i<STEPS;i++){
     dx = sigma*(y-x);
     dy = x*(rho-z)-y;
     dz = x*y - beta*z;
@@ -310,6 +337,31 @@ void genLorenz(){
 
     //printf("%5d %8.3f %8.3f %8.3f\n",i+1,x,y,z);
   }
+}
+
+/* 
+(source: Spektre StackOverflow)
+https://stackoverflow.com/questions/22141206/how-do-i-draw-a-rainbow-in-freeglut
+*/
+void spectral_color(double *r,double *g,double *b,double l) // RGB <- lambda l = < 380,780 > [nm]
+{
+  if (l<380.0) *r= 0.00;
+  else if (l<400.0) *r= 0.05-0.05*sin(M_PI*(l-366.0)/ 33.0);
+  else if (l<435.0) *r= 0.31*sin(M_PI*(l-395.0)/ 81.0);
+  else if (l<460.0) *r= 0.31*sin(M_PI*(l-412.0)/ 48.0);
+  else if (l<540.0) *r= 0.00;
+  else if (l<590.0) *r= 0.99*sin(M_PI*(l-540.0)/104.0);
+  else if (l<670.0) *r= 1.00*sin(M_PI*(l-507.0)/182.0);
+  else if (l<730.0) *r= 0.32-0.32*sin(M_PI*(l-670.0)/128.0);
+  else *r= 0.00;
+  if (l<454.0) *g= 0.00;
+  else if (l<617.0) *g= 0.78*sin(M_PI*(l-454.0)/163.0);
+  else *g= 0.00;
+  if (l<380.0) *b= 0.00;
+  else if (l<400.0) *b= 0.14-0.14*sin(M_PI*(l-364.0)/ 35.0);
+  else if (l<445.0) *b= 0.96*sin(M_PI*(l-395.0)/104.0);
+  else if (l<510.0) *b= 0.96*sin(M_PI*(l-377.0)/133.0);
+  else *b=     0.00;
 }
 
 // ----------------------------------------------------------
