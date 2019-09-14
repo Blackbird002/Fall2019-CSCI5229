@@ -1,4 +1,3 @@
-# Example 6
 EXE=lorenz
 
 # Main target
