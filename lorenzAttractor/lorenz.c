@@ -11,6 +11,10 @@ Right click inside of the windows to see options to change:
   2 - Beta
   3 - Rho
 
+Increase/decrease selected variable with:
+  1 - (= key) increase
+  2- (- key) decrease
+
 Callbacks in C:
 -function that is passed as an argument to another function
 
@@ -40,7 +44,7 @@ to use GL_LINE_STRIP - requence of line segments
 // ----------------------------------------------------------
 int rotate_y = -45;
 int rotate_x = 45;
-double dim= 50;   // Dimension of orthogonal box
+double dim= 55;   // Dimension of orthogonal box
 
 /*  Lorenz Parameters  */
 double sigma  = 10.0;
@@ -72,6 +76,7 @@ void theMenu(int value);
 void redoLerenz();
 void lorenzSimulation();
 void spectral_color(double *r,double *g,double *b,double l);
+void errorCheck(char* where);
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -100,6 +105,11 @@ static void special(int k, int x, int y)
 
   // Marks the current window as needing to be redisplayed
   glutPostRedisplay();
+}
+
+void errorCheck(char* where){
+  int err = glGetError();
+  if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
 }
 
 // ----------------------------------------------------------
@@ -206,6 +216,9 @@ void display(){
   //glWindowPos2i(5,25);
   //Print("Angle Y= %d",rotate_y);
 
+  //Check for errors
+  errorCheck("display");
+
   // Force the execution of queued commands
   glFlush();
 
@@ -243,17 +256,18 @@ void drawAxisLabels(){
 }
 
 void drawLorenz(){
-  double r,g,b = 0;
-  double waveL = 400; //380 - 780
+  double r,g,b = 0.0;
+  double waveL = 570.0; //380 - 780
+  glLineWidth(1);
   glBegin(GL_LINE_STRIP);
-    glLineWidth(2);
     for (int i=0;i<STEPS;i++){
-      if(waveL > 600)
-        waveL = 380;
+      if(waveL >= 620.0)
+        waveL = 570.0;
       spectral_color(&r,&g,&b,waveL);
       glColor3d(r,g,b);
-      glVertex3d(lorenzPoints[i][0], lorenzPoints[i][1], lorenzPoints[i][2]);
-      waveL += 0.01;
+      //v -> type is pointer to array coordinates
+      glVertex3dv(lorenzPoints[i]);
+      waveL += 0.05;
     }
   glEnd();
 }
@@ -334,7 +348,6 @@ void genLorenz(){
     lorenzPoints[i][1] = y;
     lorenzPoints[i][2] = z;
 
-
     //printf("%5d %8.3f %8.3f %8.3f\n",i+1,x,y,z);
   }
 }
@@ -342,6 +355,8 @@ void genLorenz(){
 /* 
 (source: Spektre StackOverflow)
 https://stackoverflow.com/questions/22141206/how-do-i-draw-a-rainbow-in-freeglut
+
+C does not have references - just pointers
 */
 void spectral_color(double *r,double *g,double *b,double l) // RGB <- lambda l = < 380,780 > [nm]
 {
