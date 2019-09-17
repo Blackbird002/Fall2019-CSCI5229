@@ -54,9 +54,11 @@ double rho  = 28.0;
 bool changeS = false;
 bool changeB = false;
 bool changeR = false;
-int STEPS = 100000;
+bool simulationMode = false;
+int STEPS = 50000;
+int simStepCount = 0;
 
-GLdouble lorenzPoints[100000][3];
+GLdouble lorenzPoints[50000][3];
 
 // ----------------------------------------------------------
 // Function Prototypes
@@ -129,8 +131,15 @@ void theMenu(int value){
     changeB = false;
     changeR = true;
   }else if(value == 4){
+    simulationMode = true;
+  }else if(value == 5){
+    simulationMode = false;
+  }else if(value == 6){
     exit(0);
   }
+
+  // Marks the current window as needing to be redisplayed
+  glutPostRedisplay();
 }
 
 // ----------------------------------------------------------
@@ -171,7 +180,9 @@ void init(){
   glutAddMenuEntry("Change Sigma", 1);
   glutAddMenuEntry("Change Beta", 2);
   glutAddMenuEntry("Change Rho", 3);
-  glutAddMenuEntry("Quit", 4);
+  glutAddMenuEntry("Simulation mode", 4);
+  glutAddMenuEntry("Normal Mode", 5);
+  glutAddMenuEntry("Quit", 6);
 
   // Let the menu respond on the right mouse button
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
@@ -197,7 +208,12 @@ void display(){
 
   drawAxisLines();
   drawAxisLabels();
-  drawLorenz();
+
+  if(!simulationMode)
+    drawLorenz();
+  else
+    lorenzSimulation();
+  
 
   //  Display rotation angles
   glColor3f(1,1,1);
@@ -212,6 +228,9 @@ void display(){
   }else if(changeR){
     Print("   Changing Sigma mode");
   }
+
+  if(simulationMode)
+    Print("   Simulation mode: Step# %d", simStepCount);
 
   //glWindowPos2i(5,25);
   //Print("Angle Y= %d",rotate_y);
@@ -260,15 +279,15 @@ void drawLorenz(){
   double waveL = 570.0; //380 - 780
   glLineWidth(1);
   glBegin(GL_LINE_STRIP);
-    for (int i=0;i<STEPS;i++){
-      if(waveL >= 620.0)
-        waveL = 570.0;
-      spectral_color(&r,&g,&b,waveL);
-      glColor3d(r,g,b);
-      //v -> type is pointer to array coordinates
-      glVertex3dv(lorenzPoints[i]);
-      waveL += 0.05;
-    }
+  for (int i=0;i<STEPS;i++){
+    if(waveL >= 620.0)
+      waveL = 570.0;
+    spectral_color(&r,&g,&b,waveL);
+    glColor3d(r,g,b);
+    //v -> type is pointer to array coordinates
+    glVertex3dv(lorenzPoints[i]);
+    waveL += 0.05;
+  }
   glEnd();
 }
 
@@ -278,7 +297,20 @@ void redoLerenz(){
 }
 
 void lorenzSimulation(){
-
+  double r,g,b = 0.0;
+  double waveL = 570.0; //380 - 780
+  glLineWidth(1);
+  glBegin(GL_LINE_STRIP);
+  for (int i=0;i<simStepCount;i++){
+    if(waveL >= 620.0)
+      waveL = 570.0;
+    spectral_color(&r,&g,&b,waveL);
+    glColor3d(r,g,b);
+    //v -> type is pointer to array coordinates
+    glVertex3dv(lorenzPoints[i]);
+    waveL += 0.05;
+    }
+  glEnd();
 }
 
 // Convenience function for text
@@ -298,7 +330,21 @@ void Print(const char* format , ...)
 }
 
 // This function is called by GLUT when idle
-void idle(){}
+void idle(){
+
+  if(simulationMode == true){
+    //  Get elapsed (wall) time in seconds
+    //double t = glutGet(GLUT_ELAPSED_TIME)/1000.0;
+
+    if(simStepCount < STEPS){
+      simStepCount+=10;
+    }else
+      simStepCount = 0;
+
+    //  Request display update
+    glutPostRedisplay();
+  }
+}
 
 // This function is called by GLUT when the window is resized
 void reshape(int width,int height)
