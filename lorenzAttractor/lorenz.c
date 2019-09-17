@@ -1,4 +1,7 @@
 /*
+Riad Shash (Ray)
+CSCI5229 Fall 2019
+
 Use keyboard arrow keys to spin
 (left/right about the y axis)
 (up/down about the x axis)
@@ -10,6 +13,9 @@ Right click inside of the windows to see options to change:
   1 - Sigma
   2 - Beta
   3 - Rho
+  4 - Simulation mode (draws the lorenz attractor!)
+  5 - Normal mode (lorenz fully drawn)
+  6 - Exit program
 
 Increase/decrease selected variable with:
   1 - (= key) increase
@@ -21,11 +27,8 @@ Callbacks in C:
 Ternary Operator
 condition ? value_if_true : value_if_false
 
-Compile with (Windows):
-gcc -O3 -Wall -o lorenz lorenz.c -lglut32cu -lglu32 -lopengl32
-
 The reason I'm generating an array of coordinates is that I want
-to use GL_LINE_STRIP - requence of line segments
+to use GL_LINE_STRIP - sequence of line segments
 */
 
 #include <stdio.h>
@@ -133,7 +136,8 @@ void theMenu(int value){
   }else if(value == 4){
     simulationMode = true;
   }else if(value == 5){
-    simulationMode = false;
+    simulationMode = false; 
+    simStepCount = 0; //Reset the count so it starts over agian
   }else if(value == 6){
     exit(0);
   }
@@ -231,9 +235,6 @@ void display(){
 
   if(simulationMode)
     Print("   Simulation mode: Step# %d", simStepCount);
-
-  //glWindowPos2i(5,25);
-  //Print("Angle Y= %d",rotate_y);
 
   //Check for errors
   errorCheck("display");
@@ -393,8 +394,6 @@ void genLorenz(){
     lorenzPoints[i][0] = x;
     lorenzPoints[i][1] = y;
     lorenzPoints[i][2] = z;
-
-    //printf("%5d %8.3f %8.3f %8.3f\n",i+1,x,y,z);
   }
 }
 
