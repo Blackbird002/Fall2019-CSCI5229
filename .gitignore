@@ -1,4 +1,5 @@
 Sandbox/3DAxis.exe
 lorenzAttractor/lorenz.exe
-3DScene/HW#3.exe
 lorenzAttractor/lorenz.o
+3DScene/hw3.o
+3DScene/hw3.exe

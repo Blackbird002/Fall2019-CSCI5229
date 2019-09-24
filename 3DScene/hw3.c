@@ -35,7 +35,7 @@ gcc -O3 -Wall -o HW#3 HW#3.c -lglut32cu -lglu32 -lopengl32
 // ----------------------------------------------------------
 int rotate_y = -45;
 int rotate_x = 45;
-double dim=40;   // Dimension of orthogonal box
+double dim=70;   // Dimension of orthogonal box
 
 // ----------------------------------------------------------
 // Function Prototypes
@@ -53,7 +53,7 @@ void errorCheck(char* where);
 static void sphere2(double x,double y,double z,double r);
 static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz);
+                       double ux,double uy, double uz, double scale);
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -104,40 +104,40 @@ static void Vertex(double th,double ph)
  */
 static void sphere2(double x,double y,double z,double r)
 {
-   const int d=5;
-   int th,ph;
+  const int d=5;
+  int th,ph;
 
-   //  Save transformation
-   glPushMatrix();
-   //  Offset and scale
-   glTranslated(x,y,z);
-   glScaled(r,r,r);
+  //  Save transformation
+  glPushMatrix();
+  //  Offset and scale
+  glTranslated(x,y,z);
+  glScaled(r,r,r);
 
-   //  Latitude bands
-   for (ph=-90;ph<90;ph+=d)
-   {
-      glBegin(GL_QUAD_STRIP);
-      for (th=0;th<=360;th+=d)
-      {
-         Vertex(th,ph);
-         Vertex(th,ph+d);
-      }
-      glEnd();
-   }
+  //  Latitude bands
+  for (ph=-90;ph<90;ph+=d)
+  {
+    glBegin(GL_QUAD_STRIP);
+    for (th=0;th<=360;th+=d)
+    {
+        Vertex(th,ph);
+        Vertex(th,ph+d);
+    }
+    glEnd();
+  }
 
-   //  Undo transformations
-   glPopMatrix();
+  //  Undo transformations
+  glPopMatrix();
 }
 
 /*
- *  Draw solid airplane
+ *  Draw solid space bomber
  *    at (x,y,z)
  *    nose towards (dx,dy,dz)
- *    up towards (ux,uy,uz)
+ *    UP vector (ux,uy,uz) 
  */
 static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz)
+                       double ux,double uy, double uz, double scale)
 {
   // Dimensions used to size airplane
   const double wid = 1;   //The "width of the plane's "Fuselage"
@@ -180,6 +180,7 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   //  Offset, scale and rotate
   glTranslated(x,y,z);
   glMultMatrixd(mat);
+  glScaled(scale,scale,scale);
 
   //  Front Nose (4 sided)
   glColor3f(0,0,1);
@@ -371,7 +372,6 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   glPopMatrix();
 }
 
-
 // ----------------------------------------------------------
 // key() Callback function
 // ----------------------------------------------------------
@@ -410,10 +410,11 @@ void display(){
 
   drawAxisLines();
   drawAxisLabels();
-  ArtemisSpaceBomber( 0, 0, 0 , 1,0,0 , 0, 1,0);
-  ArtemisSpaceBomber( -20, 0, 20 , 1,0,0 , 0, 1,0);
-  ArtemisSpaceBomber( -20, 0, -20 , 1,0,0 , 0, 1,0);
-   ArtemisSpaceBomber( -40, 0, 0 , 1,0,0 , 0, 1,0);
+  ArtemisSpaceBomber( 0, 0, 0 , 1,0,0 , 0, 1,0,1);
+  ArtemisSpaceBomber( -20, 0, 20 , 1,0,0 , 0, 1,0,1);
+  ArtemisSpaceBomber( -20, 0, -20 , 1,0,0 , 0, 1,0,1);
+  ArtemisSpaceBomber( -50, 0, 0 , 0,0,1 , 0, 1,0,1.5);
+  ArtemisSpaceBomber( 30, 10, 5 , 0,1,0 , 1,0,0,1.5);
 
   //  Display rotation angles
   glColor3f(1,1,1);
@@ -536,7 +537,7 @@ int main(int argc, char* argv[]){
                        (glutGet(GLUT_SCREEN_HEIGHT)-480)/2);
 
   // Set window size
-  glutInitWindowSize(640,480);
+  glutInitWindowSize(800,600);
 
   // Create window
   glutCreateWindow("3D Scene");
