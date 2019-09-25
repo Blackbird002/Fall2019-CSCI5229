@@ -149,16 +149,17 @@ static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale)
 {
+  //-10
   // Dimensions used to size airplane
   const double wid = 1;   //The "width of the plane's "Fuselage"
-  const double shipBowXfront = 10;    //X of front nose
-  const double shipBowXend = 6;     //X of end nose
-  const double shipSternX = -10;    //X end of ship
-  const double cockpitX = 5;        //X center of cockpit
+  const double shipBowXfront = 0;    //X of front nose
+  const double shipBowXend = -4;     //X of end nose
+  const double shipSternX = -20;    //X end of ship
+  const double cockpitX = -5;        //X center of cockpit
 
-  const double missleBayXfront = 2;
-  const double missleBayXend = -5;
-  const double missleBaywid = 4;
+  const double missleBayXfront = -8;
+  const double missleBayXend = -15;
+  const double missleBaywid = 3;
   const double missleBayHight = 3;
   
   //  Unit vector in direction of flght
@@ -261,21 +262,21 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   sphere2(cockpitX,1,0,1);
 
   //Right Canard
-  glColor3f(1,0.5,0);
+  glColor3f(0,1,0);
   glBegin(GL_POLYGON);
-    glVertex3d(3,0,wid);
-    glVertex3d(6,0,wid);
-    glVertex3d(5,0,wid+1);
-    glVertex3d(4,0,wid+1);
+    glVertex3d(-7,0,wid);
+    glVertex3d(-4,0,wid);
+    glVertex3d(-5,0,wid+1);
+    glVertex3d(-6,0,wid+1);
   glEnd();
 
   //Left Canard
-  glColor3f(1,0.5,0);
+  glColor3f(0,1,0);
   glBegin(GL_POLYGON);
-    glVertex3d(3,0,-wid);
-    glVertex3d(6,0,-wid);
-    glVertex3d(5,0,-wid-1);
-    glVertex3d(4,0,-wid-1);
+    glVertex3d(-7,0,-wid);
+    glVertex3d(-4,0,-wid);
+    glVertex3d(-5,0,-wid-1);
+    glVertex3d(-6,0,-wid-1);
   glEnd();
 
   //  Right missle bay
@@ -388,24 +389,25 @@ static void ArtemisSpaceBomber(double x,double y,double z,
 
 /*
  *  Draw solid fighter jet
- *    at (x,y,z)
- *    nose towards (dx,dy,dz)
+ *    front nose at (x,y,z)
+ *    nose points towards (dx,dy,dz)
  *    UP vector (ux,uy,uz) 
  */
 static void FighterJet(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale)
 {
+  //-20
   // Dimensions used to size airplane
   const double wid = 1;   //The "width of the plane's "Fuselage"
-  const double shipBowXfront = 10;    //X of front nose
-  const double shipBowXend = 6;     //X of end nose
-  const double shipSternX = -10;    //X end of ship
-  const double cockpitX = 5;        //X center of cockpit
+  const double shipBowXfront = 0;    //X of front nose
+  const double shipBowXend = -4;     //X of end nose
+  const double shipSternX = -20;    //X end of ship
+  const double cockpitX = -5;        //X center of cockpit
 
-  const double wingXfront = 2;
-  const double wingXend = -9;
-  const double wingXfrontFold = -7;
+  const double wingXfront = -8;
+  const double wingXend = -19;
+  const double wingXfrontFold = -17;
   const double wingZ = 10;
 
   const double elevatorZ = 5;
@@ -413,8 +415,8 @@ static void FighterJet(double x,double y,double z,
   const double canardXfront = shipBowXend;
   const double canardZ = 4;
 
-  const double wingLinefrontX = -6;
-  const double wingLineXend = -10;
+  const double wingLinefrontX = -16;
+  const double wingLineXend = -20;
   const double wingLineZ = wingZ;
   
   //  Unit vector in direction of flght
@@ -572,28 +574,44 @@ static void FighterJet(double x,double y,double z,
   glPopMatrix();
 }
 
+// ----------------------------------------------------------
+//  XB70 Bomber jet
+// ----------------------------------------------------------
+
+/*
+ *  Draw XB70 Bomber jet
+ *    front nose at (x,y,z)
+ *    nose points towards (dx,dy,dz)
+ *    UP vector (ux,uy,uz) 
+ *    scale of the plane xyz (scale)
+ */
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale)
 {
-  const double shipFrontNoseX = 60.0;
-  const double shipRearNoseX = 51.0;
+  // - 60
+  const double shipFrontNoseX = 0.0;
+  const double shipRearNoseX = -9.0;
   const double shipWidth = 2.0;
   const double cockpitLocX = shipRearNoseX - shipWidth;
-  const double shipRearX = 0.0;
-  const double wingsFrontX = 40.0;
-  const double wingsRearX = 0.0;
+  const double shipRearX = -60.0;
+  const double wingsFrontX = -20.0;
+  const double wingsRearX = -60.0;
   const double shipFuselageHeight = 2.0;
   const double wingSpanZ = 50/2;
   const double frontFuselageXEnd = wingsFrontX;
 
   const double foldingWingZ = 15;
-  const double foldingWingXfront = 10;
+  const double foldingWingXfront = -50;
   const double foldingWingYHeight = 5;
 
   const double verticalsZ = 10;
   const double verticalsHeight = 7;
-  const double verticalsXfront = 10;
+  const double verticalsXfront = -50;
+
+  const double canardFrontX = shipRearNoseX - 2;
+  const double canardRearX = canardFrontX - 6;
+  const double canardZ = 5;
 
   //  Unit vector in direction of flght
   double D0 = sqrt(dx*dx+dy*dy+dz*dz);
@@ -754,6 +772,24 @@ static void XB70Bomber(double x,double y,double z,
     glVertex3d(verticalsXfront, -shipFuselageHeight, -verticalsZ);
   glEnd();
 
+  //Right Canard
+  glColor3f(0,1,0);
+  glBegin(GL_POLYGON);
+    glVertex3d(canardRearX,0,shipWidth);
+    glVertex3d(canardRearX+1,0,canardZ);
+    glVertex3d(canardRearX+4,0,canardZ);
+    glVertex3d(canardFrontX,0,shipWidth);
+  glEnd();
+
+  //Left Canard
+  glColor3f(0,1,0);
+  glBegin(GL_POLYGON);
+    glVertex3d(canardRearX,0,-shipWidth);
+    glVertex3d(canardRearX+1,0,-canardZ);
+    glVertex3d(canardRearX+4,0,-canardZ);
+    glVertex3d(canardFrontX,0,-shipWidth);
+  glEnd();
+
   //Cockpit
   glColor3f(0,1,0);
   sphere2(cockpitLocX,shipFuselageHeight,0,shipWidth);
@@ -801,10 +837,14 @@ void display(){
   drawAxisLines();
   drawAxisLabels();
   
-  XB70Bomber(30,0,0 , 1,0,0, 0,1,0,0.8);
-  FighterJet(20,0,40, 1,0,0, 0,1,0,0.8);
-  FighterJet(20,0,-40, 1,0,0, 0,1,0,0.8);
-  FighterJet(-40,0,0, 1,0,0, 0,1,0,0.8);
+  //XB70Bomber(30,0,0 , 1,0,0, 0,1,0,0.8);
+  //FighterJet(20,0,40, 1,0,0, 0,1,0,0.8);
+  //FighterJet(20,0,-40, 1,0,0, 0,1,0,0.8);
+  //FighterJet(-40,20,0, 1,0,0, 0,1,0,0.8);
+  XB70Bomber(0,0,0 , 1,0,0, 0,1,0,0.8);
+  //FighterJet(0,0,0, 1,0,0, 0,1,0,1);
+  //ArtemisSpaceBomber(0,0,0, 1,0,0, 0,1,0, 1);
+  
 
   //  Display rotation angles
   glColor3f(1,1,1);
@@ -861,7 +901,7 @@ void drawAxisLabels(){
   glRasterPos3d(25.05,0,0);
   Print("X");
   glRasterPos3d(-25.05,0,0);
-   Print("-X");
+  Print("-X");
   glRasterPos3d(0,25.05,0);
   Print("Y");
   glRasterPos3d(0,-25.05,0);
