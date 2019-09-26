@@ -36,6 +36,7 @@ gcc -O3 -Wall -o HW#3 HW#3.c -lglut32cu -lglu32 -lopengl32
 int rotate_y = -45;
 int rotate_x = 45;
 double dim=70;   // Dimension of orthogonal box
+double PI = 3.14159;
 
 // ----------------------------------------------------------
 // Function Prototypes
@@ -50,16 +51,17 @@ void drawAxisLabels();
 void init();
 void key(unsigned char ch,int x,int y);
 void errorCheck(char* where);
-static void sphere2(double x,double y,double z,double r);
+static void halfSphere(double x,double y,double z,double r);
 static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale);
+                       double ux,double uy, double uz, double scale, double thx);
 static void FighterJet(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale);
+                       double ux,double uy, double uz, double scale, double thx, double thz);
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale);
+                       double ux,double uy, double uz, double scale, double thx);
+void drawCone(double x, double y, double z, double r, double h);
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -97,6 +99,13 @@ void errorCheck(char* where){
 
 /*
  *  Draw vertex in polar coordinates
+ *  Polar to Cartesian
+ *  x = rcos(theta)
+ *  y = rsin(theta)
+ * 
+ *  Cartesian to Polar
+ *  r = sqrt(x^2 + y^2)
+ *  theta = tan^(-1) (y/x)
  */
 static void Vertex(double th,double ph)
 {
@@ -104,11 +113,11 @@ static void Vertex(double th,double ph)
 }
 
 /*
- *  Draw a sphere (version 2)
+ *  Draw a halfSphere
  *     at (x,y,z)
  *     radius (r)
  */
-static void sphere2(double x,double y,double z,double r)
+static void halfSphere(double x,double y,double z,double r)
 {
   const int d=5;
   int th,ph;
@@ -135,6 +144,37 @@ static void sphere2(double x,double y,double z,double r)
   glPopMatrix();
 }
 
+/*
+ *  Draw a Cone
+ *     base at (x,y,z)
+ *     radius (r)
+ *     heght (h)
+ */
+void drawCone(double x, double y, double z, double r, double h){
+  const double orgX = x;
+  const double orgY = y;
+  const double orgZ = z;
+  glBegin(GL_TRIANGLE_FAN);
+    glVertex3d(x,y+h,x);
+    for(double angle = 0.0; angle < 360; angle += 0.1){
+      z = r*sin(angle);
+      x = r*cos(angle);
+      glVertex3d(x + orgX,y,z + orgZ);
+    }
+  glEnd();
+
+  //Draw the base of the cone
+  glColor3f(1,0,0);
+  glBegin(GL_TRIANGLE_FAN);
+    glVertex3d(orgX,orgY,orgZ);
+    for(double angle = 0.0; angle < 360; angle += 0.1){
+      z = r*sin(angle);
+      x = r*cos(angle);
+      glVertex3d(x + orgX,y,z + orgZ);
+    }
+  glEnd();
+}
+
 // ----------------------------------------------------------
 //  ArtemisSpaceBomber
 // ----------------------------------------------------------
@@ -147,7 +187,7 @@ static void sphere2(double x,double y,double z,double r)
  */
 static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale)
+                       double ux,double uy, double uz, double scale, double thx)
 {
   //-10
   // Dimensions used to size airplane
@@ -191,6 +231,7 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   //  Offset, scale and rotate
   glTranslated(x,y,z);
   glMultMatrixd(mat);
+  glRotated(thx,1,0,0);
   glScaled(scale,scale,scale);
 
   //  Front Nose (4 sided)
@@ -259,7 +300,7 @@ static void ArtemisSpaceBomber(double x,double y,double z,
 
   //  Cockpit
   glColor3f(0,1,0);
-  sphere2(cockpitX,1,0,1);
+  halfSphere(cockpitX,1,0,1);
 
   //Right Canard
   glColor3f(0,1,0);
@@ -395,7 +436,7 @@ static void ArtemisSpaceBomber(double x,double y,double z,
  */
 static void FighterJet(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale)
+                       double ux,double uy, double uz, double scale, double thx, double thz)
 {
   //-20
   // Dimensions used to size airplane
@@ -448,6 +489,8 @@ static void FighterJet(double x,double y,double z,
   //  Offset, scale and rotate
   glTranslated(x,y,z);
   glMultMatrixd(mat);
+  glRotated(thx,1,0,0);
+  glRotated(thz,0,0,1);
   glScaled(scale,scale,scale);
 
   //  Front Nose (4 sided)
@@ -516,7 +559,7 @@ static void FighterJet(double x,double y,double z,
 
   //  Cockpit
   glColor3f(0,1,0);
-  sphere2(cockpitX,1,0,1);
+  halfSphere(cockpitX,1,0,1);
 
   glBegin(GL_TRIANGLES);
     //Right Canard
@@ -587,9 +630,8 @@ static void FighterJet(double x,double y,double z,
  */
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale)
+                       double ux,double uy, double uz, double scale, double thx)
 {
-  // - 60
   const double shipFrontNoseX = 0.0;
   const double shipRearNoseX = -9.0;
   const double shipWidth = 2.0;
@@ -612,6 +654,12 @@ static void XB70Bomber(double x,double y,double z,
   const double canardFrontX = shipRearNoseX - 2;
   const double canardRearX = canardFrontX - 6;
   const double canardZ = 5;
+
+  //Inlets
+  const double inletMiddleForntX = wingsFrontX - 3;
+  const double inletMiddleRearX = shipRearX;
+  const double inletY = -shipFuselageHeight - 1.5;
+  const double inletSidefrontX = wingsFrontX - 6;
 
   //  Unit vector in direction of flght
   double D0 = sqrt(dx*dx+dy*dy+dz*dz);
@@ -642,6 +690,7 @@ static void XB70Bomber(double x,double y,double z,
   //  Offset, scale and rotate
   glTranslated(x,y,z);
   glMultMatrixd(mat);
+  glRotated(thx,1,0,0);
   glScaled(scale,scale,scale);
 
   //  Front Nose (4 sided)
@@ -708,7 +757,7 @@ static void XB70Bomber(double x,double y,double z,
     glVertex3d(shipRearX, -shipFuselageHeight, shipWidth);
   glEnd();
 
-  //Rear fuselage rides
+  //Rear fuselage sides
   glBegin(GL_POLYGON);
     //Right side
     glVertex3d(frontFuselageXEnd, shipFuselageHeight, shipWidth);
@@ -790,9 +839,49 @@ static void XB70Bomber(double x,double y,double z,
     glVertex3d(canardFrontX,0,-shipWidth);
   glEnd();
 
+  //Inlet middle, left and right side
+  glColor3f(1,1,1); //white
+  glBegin(GL_QUADS);
+    //Middle inlet
+    glVertex3d(inletMiddleForntX,inletY,0);
+    glVertex3d(inletMiddleRearX, inletY, 0);
+    glVertex3d(inletMiddleRearX, -shipFuselageHeight, 0);
+    glVertex3d(inletMiddleForntX, -shipFuselageHeight,0);
+
+    //Left inlet side
+    glVertex3d(inletSidefrontX,inletY,shipWidth);
+    glVertex3d(inletMiddleRearX, inletY, shipWidth);
+    glVertex3d(inletMiddleRearX, -shipFuselageHeight, shipWidth);
+    glVertex3d(inletSidefrontX, -shipFuselageHeight, shipWidth);
+
+    //Right inlet side
+    glVertex3d(inletSidefrontX,inletY,-shipWidth);
+    glVertex3d(inletMiddleRearX, inletY, -shipWidth);
+    glVertex3d(inletMiddleRearX, -shipFuselageHeight, -shipWidth);
+    glVertex3d(inletSidefrontX, -shipFuselageHeight, -shipWidth);
+  glEnd();
+
+  //Back inlet left bottom side
+  glColor3f(0,0,1);
+  glBegin(GL_POLYGON);
+    glVertex3f(inletSidefrontX, inletY, shipWidth);
+    glVertex3d(inletMiddleRearX, inletY, shipWidth);
+    glVertex3d(inletMiddleRearX, inletY, 0);
+    glVertex3d(inletMiddleForntX, inletY, 0);
+  glEnd();
+
+  //Back inlet right bottom side
+  glColor3f(0,0,1);
+  glBegin(GL_POLYGON);
+    glVertex3f(inletSidefrontX, inletY, -shipWidth);
+    glVertex3d(inletMiddleRearX, inletY, -shipWidth);
+    glVertex3d(inletMiddleRearX, inletY, 0);
+    glVertex3d(inletMiddleForntX, inletY, 0);
+  glEnd();
+
   //Cockpit
   glColor3f(0,1,0);
-  sphere2(cockpitLocX,shipFuselageHeight,0,shipWidth);
+  halfSphere(cockpitLocX,shipFuselageHeight,0,shipWidth);
 
   //  Undo transformations
   glPopMatrix();
@@ -837,13 +926,11 @@ void display(){
   drawAxisLines();
   drawAxisLabels();
   
-  //XB70Bomber(30,0,0 , 1,0,0, 0,1,0,0.8);
-  //FighterJet(20,0,40, 1,0,0, 0,1,0,0.8);
-  //FighterJet(20,0,-40, 1,0,0, 0,1,0,0.8);
-  //FighterJet(-40,20,0, 1,0,0, 0,1,0,0.8);
-  XB70Bomber(0,0,0 , 1,0,0, 0,1,0,0.8);
-  //FighterJet(0,0,0, 1,0,0, 0,1,0,1);
-  //ArtemisSpaceBomber(0,0,0, 1,0,0, 0,1,0, 1);
+  FighterJet(20,0,40, 1,0,0, 0,1,0,0.8, 25,0);
+  FighterJet(20,0,-40, 1,0,0, 0,1,0,0.8, -25,0);
+  FighterJet(-40,20,0, 1,0,0, 0,1,0,0.8, 0, 25);
+  XB70Bomber(50,10,0 , 1,0,0, 0,1,0,0.8, 0);
+  //drawCone(5,5, 5, 5,5);
   
 
   //  Display rotation angles
