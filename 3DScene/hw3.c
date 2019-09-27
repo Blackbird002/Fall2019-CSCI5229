@@ -24,6 +24,7 @@ gcc -O3 -Wall -o HW#3 HW#3.c -lglut32cu -lglu32 -lopengl32
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
+#include <stdbool.h>
 #endif
 
 //  Cosine and Sine in degrees
@@ -33,10 +34,16 @@ gcc -O3 -Wall -o HW#3 HW#3.c -lglut32cu -lglu32 -lopengl32
 // ----------------------------------------------------------
 // Global Variables
 // ----------------------------------------------------------
-int rotate_y = -45;
+int rotate_y = 245;
 int rotate_x = 45;
 double dim=70;   // Dimension of orthogonal box
 double PI = 3.14159;
+int currentScene = 1;
+bool drawAxis = true;
+
+double THX;
+double THZ;
+double time;
 
 // ----------------------------------------------------------
 // Function Prototypes
@@ -48,20 +55,21 @@ void Print(const char* format , ...);
 static void special(int k, int x, int y);
 void drawAxisLines();
 void drawAxisLabels();
+void theMenu(int value);
 void init();
 void key(unsigned char ch,int x,int y);
 void errorCheck(char* where);
 static void halfSphere(double x,double y,double z,double r);
 static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale, double thx);
+                       double ux,double uy, double uz, double scale, double thx, double thz);
 static void FighterJet(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale, double thx, double thz);
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale, double thx);
-void drawCone(double x, double y, double z, double r, double h);
+                       double ux,double uy, double uz, double scale, double thx, double thz);
+void drawCone(double x, double y, double z, double r, double h, double thz);
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -95,6 +103,29 @@ static void special(int k, int x, int y)
 void errorCheck(char* where){
   int err = glGetError();
   if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
+}
+
+// ----------------------------------------------------------
+// theMenu() Callback function
+// ----------------------------------------------------------
+void theMenu(int value){
+  if(value == 1){
+    currentScene = 1;
+  }else if(value == 2){
+    currentScene = 2;
+  }else if(value == 3){
+    currentScene = 3;
+  }else if(value == 4){
+    if(drawAxis == true)
+      drawAxis = false;
+    else
+      drawAxis = true;
+  }else if (value == 5){
+    exit(0);
+  }
+
+  // Marks the current window as needing to be redisplayed
+  glutPostRedisplay();
 }
 
 /*
@@ -149,11 +180,13 @@ static void halfSphere(double x,double y,double z,double r)
  *     base at (x,y,z)
  *     radius (r)
  *     heght (h)
+ *     rotation about Z axis (thz)
  */
-void drawCone(double x, double y, double z, double r, double h){
+void drawCone(double x, double y, double z, double r, double h, double thz){
   const double orgX = x;
   const double orgY = y;
   const double orgZ = z;
+  glRotated(thz,0,0,1);
   glBegin(GL_TRIANGLE_FAN);
     glVertex3d(x,y+h,x);
     for(double angle = 0.0; angle < 360; angle += 0.1){
@@ -184,10 +217,12 @@ void drawCone(double x, double y, double z, double r, double h){
  *    at (x,y,z)
  *    nose towards (dx,dy,dz)
  *    UP vector (ux,uy,uz) 
+ *    Rotation about X - roll (thx)
+ *    Rotation about Z - pitch (thz) 
  */
 static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale, double thx)
+                       double ux,double uy, double uz, double scale, double thx, double thz)
 {
   //-10
   // Dimensions used to size airplane
@@ -232,6 +267,7 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   glTranslated(x,y,z);
   glMultMatrixd(mat);
   glRotated(thx,1,0,0);
+  glRotated(thz,0,0,1);
   glScaled(scale,scale,scale);
 
   //  Front Nose (4 sided)
@@ -433,6 +469,8 @@ static void ArtemisSpaceBomber(double x,double y,double z,
  *    front nose at (x,y,z)
  *    nose points towards (dx,dy,dz)
  *    UP vector (ux,uy,uz) 
+ *    Rotation about X - roll (thx)
+ *    Rotation about Z - pitch (thz) 
  */
 static void FighterJet(double x,double y,double z,
                        double dx,double dy,double dz,
@@ -451,7 +489,6 @@ static void FighterJet(double x,double y,double z,
   const double wingXfrontFold = -17;
   const double wingZ = 10;
 
-  const double elevatorZ = 5;
   const double canardXend = wingXfront;
   const double canardXfront = shipBowXend;
   const double canardZ = 4;
@@ -585,6 +622,7 @@ static void FighterJet(double x,double y,double z,
     glVertex3d(wingLineXend, -wid, -wingLineZ);
     glVertex3d(wingLinefrontX, -wid, -wingLineZ);
   glEnd();
+  glLineWidth(1);
  
 
   //  Vertical tail (plane triangle)
@@ -627,10 +665,12 @@ static void FighterJet(double x,double y,double z,
  *    nose points towards (dx,dy,dz)
  *    UP vector (ux,uy,uz) 
  *    scale of the plane xyz (scale)
+ *    Rotation about X - roll (thx)
+ *    Rotation about Z - pitch (thz) 
  */
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
-                       double ux,double uy, double uz, double scale, double thx)
+                       double ux,double uy, double uz, double scale, double thx, double thz)
 {
   const double shipFrontNoseX = 0.0;
   const double shipRearNoseX = -9.0;
@@ -640,7 +680,6 @@ static void XB70Bomber(double x,double y,double z,
   const double wingsFrontX = -20.0;
   const double wingsRearX = -60.0;
   const double shipFuselageHeight = 2.0;
-  const double wingSpanZ = 50/2;
   const double frontFuselageXEnd = wingsFrontX;
 
   const double foldingWingZ = 15;
@@ -691,6 +730,7 @@ static void XB70Bomber(double x,double y,double z,
   glTranslated(x,y,z);
   glMultMatrixd(mat);
   glRotated(thx,1,0,0);
+  glRotated(thz,0,0,1);
   glScaled(scale,scale,scale);
 
   //  Front Nose (4 sided)
@@ -903,6 +943,20 @@ void key(unsigned char ch,int x,int y){
 // init() function
 // ----------------------------------------------------------
 void init(){
+  //Right click menu
+  int menuId = glutCreateMenu(theMenu);
+  glutSetMenu(menuId);
+  glutAddMenuEntry("Draw Everything!", 1);
+  glutAddMenuEntry("Draw only planes", 2);
+  glutAddMenuEntry("Auto rotation", 3);
+  glutAddMenuEntry("Axis ON/OFF", 4);
+  glutAddMenuEntry("Quit", 5);
+
+  glLineWidth(2);
+  
+  // Let the menu respond on the right mouse button
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+
 
   //  Clear values for the color buffers (background color)
   glClearColor(0.1f, 0.1f, 0.1f, 0.0);  //Dark Gray
@@ -923,23 +977,60 @@ void display(){
   glRotatef(rotate_x, 1.0, 0.0, 0.0 );  //x coordinate
   glRotatef(rotate_y, 0.0, 1.0, 0.0 );  //y coordinate
 
-  drawAxisLines();
-  drawAxisLabels();
-  
-  FighterJet(20,0,40, 1,0,0, 0,1,0,0.8, 25,0);
-  FighterJet(20,0,-40, 1,0,0, 0,1,0,0.8, -25,0);
-  FighterJet(-40,20,0, 1,0,0, 0,1,0,0.8, 0, 25);
-  XB70Bomber(50,10,0 , 1,0,0, 0,1,0,0.8, 0);
-  //drawCone(5,5, 5, 5,5);
-  
+  if(drawAxis){
+    drawAxisLines();
+    drawAxisLabels();
+  }
 
+  switch(currentScene){
+    case 1:
+      XB70Bomber(60,10,-20 , 1,0,0, 0,1,0, 0.7, 0, 0);
+      FighterJet(20,0,40, 1,0,0, 0,1,0, 1, 25, 25);
+      ArtemisSpaceBomber(10,40,10, 1,0,0, 0,1,0, 1, -25, 40);
+      XB70Bomber(-20,30,-20 , 1,0,0, 0,1,0, 1, 20, 70);
+      FighterJet(-50,30,40, 1,0,0, 0,1,0, 1, 90, 90);
+      XB70Bomber(60,5,5 , 1,0,0, 0,1,0, 0.25, 20, 70);
+      FighterJet(50,10,-20 , 1,0,0, 0,1,0, 0.3, 25, 25);
+      drawCone(5,0,5,5,10,90);
+      break;
+    case 2:
+      FighterJet(20,0,40, 1,0,0, 0,1,0,0.8, 25,0);
+      FighterJet(20,0,-40, 1,0,0, 0,1,0,0.8, -25,0);
+      FighterJet(-40,20,0, 1,0,0, 0,1,0,0.8, 0, 25);
+      XB70Bomber(50,10,0 , 1,0,0, 0,1,0,0.8, 0, 10);
+      FighterJet(60,-20,0, 1,0,0, 0,-1,0,0.8, 0, 25);
+      XB70Bomber(0,20,40 , 1,0,0, 0,1,0,0.5, 0, 25);
+      XB70Bomber(0,20,-40 , 1,0,0, 0,1,0,0.5, -25, -25);
+      break;
+    case 3:
+      FighterJet(-10,-10,30, 1,0,0, 0,1,0,0.8, THX,0);
+      XB70Bomber(50,10,-20, 1,0,0, 0,1,0,0.8, -THX, 0);
+      FighterJet(-10,-20,-30, 1,0,0, 0,1,0,0.8, 0,-THZ);
+      ArtemisSpaceBomber(20, 20, 25, 1,0,0, 0,1,0,0.8, 0,-THZ);
+      ArtemisSpaceBomber(40, -20, -10, 1,0,0, 0,1,0,0.8, -THX,0);
+      XB70Bomber(-25,10,0, 1,0,0, 0,1,0,0.5, 0, THZ);
+      
+  }
+  
   //  Display rotation angles
   glColor3f(1,1,1);
   glWindowPos2i(5,5);
   Print("Angle X= %d",rotate_x);
+  if(currentScene == 1)
+    Print("   Mode: Draw everything");
+  else if (currentScene == 2)
+    Print("   Mode:  Draw only planes");
+  else if( currentScene == 3)
+    Print("   Mode: Auto rotation ");
 
   glWindowPos2i(5,25);
   Print("Angle Y= %d",rotate_y);
+
+  glWindowPos2i(5,45);
+  if(drawAxis == true)
+    Print("Axis ON");
+  else
+    Print("Axis OFF");
 
   //Check for errors
   errorCheck("display");
@@ -1016,7 +1107,14 @@ void Print(const char* format , ...)
 }
 
 // This function is called by GLUT when idle
-void idle(){}
+void idle(){
+  if(currentScene == 3){
+    time = glutGet(GLUT_ELAPSED_TIME)/1000.0;
+    THX = fmod(90*time,360);
+    THZ = fmod(90*time,360);
+    glutPostRedisplay();
+  }
+}
 
 // This function is called by GLUT when the window is resized
 void reshape(int width,int height)
