@@ -1,6 +1,7 @@
 /*
 Riad Shash (Ray)
 CSCI 5229
+HW4
 
 Key bindings:
   ESC   - Exit
@@ -19,6 +20,8 @@ Key bindings:
   Use keyboard arrow keys to spin the axis lines
   (left/right about the y axis)
   (up/down about the x axis)
+  =/+     - Decrease dim (zoom in)
+  -/_     - Increase dim (zoom out)
 
   Orthogonal mode:
   Use keyboard arrow keys to spin the axis lines
@@ -50,21 +53,21 @@ Key bindings:
 double cameraLookX , cameraLookY , cameraLookZ;
 
 // XZ position of the camera in 1st person (eye)
-double cameraX=50, cameraY =10 , cameraZ=25;
+double cameraX=80, cameraY =10 , cameraZ=25;
 
-int th=0;         //  Azimuth of view angle (y)
+int th=-64;         //  Azimuth of view angle (y)
 int ph=0;         //  Elevation of view angle (x)
 
 double dim=70;   // Dimension of orthogonal box
 double PI = 3.14159;
-int currentScene = 1;
+int currentScene = 3;
 bool drawAxis = true;
 
 int fov=55;       //  Field of view (for perspective)
 double asp=1;     //  Aspect ratio
 
 /*
-  1 - First person
+  1 - First person (starts with FP mode)
   2 - Perspective
   3 - Orthogononal
 */
@@ -110,13 +113,24 @@ static void Project();
 // ----------------------------------------------------------
 static void special(int k, int x, int y)
 {
-
   if(k == GLUT_KEY_UP){
-    if(ph <= 90)
+    if(projectionMode == 1){
+      if(ph < 90)
+        ph += 2.5; 
+    }else
+    {
       ph += 2.5;
+    }
+    
   }else if(k == GLUT_KEY_DOWN){
-    if(ph >= -90)
-      ph -= 2.5;
+    if(projectionMode == 1){
+      if(ph > -90)
+        ph -= 2.5;
+    }else
+    {
+        ph -= 2.5;
+    }
+    
   }else if(k == GLUT_KEY_LEFT){
     th -= 2.5;
   }else if(k == GLUT_KEY_RIGHT){
@@ -241,19 +255,38 @@ static void Project()
 // ----------------------------------------------------------
 void theMenu(int value){
   if(value == 1){
-    currentScene = 1;
+    projectionMode = 1;
+    // XZ position of the camera in 1st person (eye)
+    cameraX=50;
+    cameraY =10; 
+    cameraZ=25;
+    ph = 0;
+    th = -60;
   }else if(value == 2){
-    currentScene = 2;
+    projectionMode = 2;
+    th = 245;
+    ph = 45;
   }else if(value == 3){
-    currentScene = 3;
+    projectionMode = 3;
+    th = 245;
+    ph = 45;
   }else if(value == 4){
     if(drawAxis == true)
       drawAxis = false;
     else
       drawAxis = true;
   }else if (value == 5){
+    currentScene = 1;
+  }else if (value == 6){
+    currentScene = 2;
+  }else if (value == 7){
+    currentScene = 3;
+  }else if (value == 8){
     exit(0);
   }
+
+  //Call project again to be sure
+  Project();
 
   // Marks the current window as needing to be redisplayed
   glutPostRedisplay();
@@ -1067,11 +1100,11 @@ void key(unsigned char ch,int x,int y){
     exit(0);
 
   //Changing Dim only allowed in Orthogonal and Perspective
-  if(projectionMode != 1){
+  if(projectionMode == 2){
       if (ch == '=' || ch == '+')
-      dim += 1;
-    else if (ch == '-' || ch == '_')
       dim -= 1;
+    else if (ch == '-' || ch == '_')
+      dim += 1;
   }
 
   //Moving camera only in First person
@@ -1100,11 +1133,14 @@ void init(){
   //Right click menu
   int menuId = glutCreateMenu(theMenu);
   glutSetMenu(menuId);
-  glutAddMenuEntry("Draw Everything!", 1);
-  glutAddMenuEntry("Draw only planes", 2);
-  glutAddMenuEntry("Auto rotation", 3);
+  glutAddMenuEntry("First Person", 1);
+  glutAddMenuEntry("Perspective", 2);
+  glutAddMenuEntry("Orthogonal", 3);
   glutAddMenuEntry("Axis ON/OFF", 4);
-  glutAddMenuEntry("Quit", 5);
+  glutAddMenuEntry("Scene 1", 5);
+  glutAddMenuEntry("Scene 2", 6);
+  glutAddMenuEntry("Scene 3", 7);
+  glutAddMenuEntry("Quit", 8);
 
   glLineWidth(2);
   
@@ -1129,14 +1165,13 @@ void display(){
   glLoadIdentity();
 
   if(projectionMode == 1){
-    //First personz
+    //First person
     cameraLookX = 2*dim*Sin(th);
     cameraLookZ = -2*dim*Cos(th);
     cameraLookY = 2*dim*Sin(ph);
     gluLookAt(cameraX,cameraY,cameraZ,
               cameraX+cameraLookX,cameraLookY + cameraLookY,cameraZ+cameraLookZ,
               0,1,0); 
-
   }else if(projectionMode == 2){
     //  Perspective - set eye position
     double Ex = -2*dim*Sin(th)*Cos(ph);
@@ -1156,13 +1191,13 @@ void display(){
 
   switch(currentScene){
     case 1:
-      XB70Bomber(60,10,-20 , 1,0,0, 0,1,0, 0.7, 0, 0);
+      XB70Bomber(60,10,-30 , 1,0,0, 0,1,0, 0.5, 0, 0);
       FighterJet(20,0,40, 1,0,0, 0,1,0, 1, 25, 25);
       ArtemisSpaceBomber(10,40,10, 1,0,0, 0,1,0, 1, -25, 40);
-      XB70Bomber(-20,30,-20 , 1,0,0, 0,1,0, 1, 20, 70);
+      XB70Bomber(-20,30,-20 , 1,0,0, 0,1,0, 0.5, 0, 90);
       FighterJet(-50,30,40, 1,0,0, 0,1,0, 1, 90, 90);
       XB70Bomber(60,5,5 , 1,0,0, 0,1,0, 0.25, 20, 70);
-      FighterJet(50,10,-20 , 1,0,0, 0,1,0, 0.3, 25, 25);
+      //FighterJet(50,10,-20 , 1,0,0, 0,1,0, 0.3, 25, 25);
       drawCone(5,0,5,5,10,90);
       break;
     case 2:
@@ -1178,28 +1213,32 @@ void display(){
       FighterJet(-10,-10,30, 1,0,0, 0,1,0,0.8, THX,0);
       XB70Bomber(50,10,-20, 1,0,0, 0,1,0,0.8, -THX, 0);
       FighterJet(-10,-20,-30, 1,0,0, 0,1,0,0.8, 0,-THZ);
-      ArtemisSpaceBomber(20, 20, 25, 1,0,0, 0,1,0,0.8, 0,-THZ);
+      FighterJet(20,20,25, 1,0,0, 0,1,0,0.8, -THX,0);
       ArtemisSpaceBomber(40, -20, -10, 1,0,0, 0,1,0,0.8, -THX,0);
-      XB70Bomber(-25,10,0, 1,0,0, 0,1,0,0.5, 0, THZ);
-      
+      XB70Bomber(-30,10,-20, 1,0,0, 0,0,1,0.8, THX, 0);
   }
   
   //  Display rotation angles
   glColor3f(1,1,1);
   glWindowPos2i(5,5);
   Print("Angle X= %d",ph);
+  Print("   Camera Mode: ");
   if(projectionMode == 1)
-    Print("   Mode: First Person");
+    Print(" First Person  ");
   else if (projectionMode == 2)
-    Print("   Mode:  Perspective");
+    Print(" Perspective  ");
   else if(projectionMode == 3)
-    Print("   Mode: Orthogonal");
+    Print(" Orthogonal  ");
 
-  Print(" Dim=%.1f",dim);
-  Print(" CameraX=%.1f",cameraX);
-  Print(" CameraY=%.1f",cameraY);
-  Print(" CameraZ=%.1f",cameraZ);
+  if(projectionMode == 2)
+    Print(" Dim=%.1f",dim);
 
+  if(projectionMode == 1){
+    Print(" CameraX=%.1f",cameraX);
+    Print(" CameraY=%.1f",cameraY);
+    Print(" CameraZ=%.1f",cameraZ);
+  }
+  
   glWindowPos2i(5,25);
   Print("Angle Y= %d",th);
 
@@ -1287,8 +1326,8 @@ void Print(const char* format , ...)
 void idle(){
   if(currentScene == 3){
     time = glutGet(GLUT_ELAPSED_TIME)/1000.0;
-    THX = fmod(90*time,360);
-    THZ = fmod(90*time,360);
+    THX = fmod(30*time,360);
+    THZ = fmod(30*time,360);
     glutPostRedisplay();
   }
 }
@@ -1317,8 +1356,8 @@ int main(int argc, char* argv[]){
 
   // Set window position 
   // Center of Screen -> (source: Kornel Kisielewicz StackOverflow)
-  glutInitWindowPosition((glutGet(GLUT_SCREEN_WIDTH)-640)/2,
-                       (glutGet(GLUT_SCREEN_HEIGHT)-480)/2);
+  glutInitWindowPosition((glutGet(GLUT_SCREEN_WIDTH)-800)/2,
+                       (glutGet(GLUT_SCREEN_HEIGHT)-600)/2);
 
   // Set window size
   glutInitWindowSize(800,600);
