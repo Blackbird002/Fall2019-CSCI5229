@@ -28,6 +28,26 @@ Key bindings:
   (left/right about the y axis)
   (up/down about the x axis)
 
+  Perspective mode & Orthogonal mode
+  l          Toggles lighting
+  a/A        Decrease/increase ambient light
+  d/D        Decrease/increase diffuse light
+  s/S        Decrease/increase specular light
+  e/E        Decrease/increase emitted light
+  n/N        Decrease/increase shininess
+  F1         Toggle smooth/flat shading
+  F2         Toggle local viewer mode
+  F3         Toggle light distance (1/5)
+  F8         Change ball increment
+  F9         Invert bottom normal
+  m          Toggles light movement
+  []         Lower/rise light
+  p          Toggles ortogonal/perspective projection
+  z/x        Change field of view of perspective
+  arrows     Change view angle
+  PgDn/PgUp  Zoom in and out
+  0          Reset view angle
+  ESC        Exit
 */
 
 #include "CSCIx229.h"
@@ -42,8 +62,8 @@ double cameraLookX , cameraLookY , cameraLookZ;
 // XZ position of the camera in 1st person (eye)
 double cameraX=80, cameraY =10 , cameraZ=25;
 
-int th=-64;         //  Azimuth of view angle (y)
-int ph=0;         //  Elevation of view angle (x)
+int th=319;         //  Azimuth of view angle (y)
+int ph=29;         //  Elevation of view angle (x)
 
 double dim=35;   // Dimension of orthogonal box
 double PI = 3.14159;
@@ -58,16 +78,18 @@ double asp=1;     //  Aspect ratio
   2 - Perspective
   3 - Orthogononal
 */
-int projectionMode = 3;     
+int projectionMode = 2;     
 
 double THX;
 double THZ;
 double time;
 
+int move=1;       //  Move light
+
 // Light values
 int light = 1;        //  Lighting
 int one       =   1;  // Unit value
-int distance  =   25;  // Light distance
+int distance  =   20;  // Light distance
 int inc       =  10;  // Ball increment
 int smooth    =   1;  // Smooth/Flat shading
 int local     =   0;  // Local Viewer Model
@@ -86,7 +108,7 @@ float ylight  =   0;  // Elevation of light
 void display();
 void reshape(int,int);
 void idle();
-static void special(int k, int x, int y);
+static void special(int k,int x,int y);
 void drawAxisLines();
 void drawAxisLabels();
 void theMenu(int value);
@@ -112,7 +134,7 @@ static void XB70Bomber(double x,double y,double z,
 // ----------------------------------------------------------
 // special() Callback function
 // ----------------------------------------------------------
-static void special(int k, int x, int y)
+static void special(int k,int x,int y)
 {
   if(k == GLUT_KEY_UP){
     if(projectionMode == 1){
@@ -122,7 +144,6 @@ static void special(int k, int x, int y)
     {
       ph += 2.5;
     }
-    
   }else if(k == GLUT_KEY_DOWN){
     if(projectionMode == 1){
       if(ph > -90)
@@ -131,14 +152,24 @@ static void special(int k, int x, int y)
     {
         ph -= 2.5;
     }
-    
   }else if(k == GLUT_KEY_LEFT){
     th -= 2.5;
-  }else if(k == GLUT_KEY_RIGHT){
+  }else if(k == GLUT_KEY_RIGHT)
     th += 2.5;
-  }else{
-    return;
-  }
+  //  Smooth color model
+  else if (k == GLUT_KEY_F1)
+    smooth = 1-smooth;
+  //  Local Viewer
+  else if (k == GLUT_KEY_F2)
+    local = 1-local;
+  else if (k == GLUT_KEY_F3)
+    distance = (distance==10) ? 20 : 10;
+  //  Toggle ball increment
+  else if (k == GLUT_KEY_F8)
+    inc = (inc==10)?3:10;
+  //  Flip sign
+  else if (k == GLUT_KEY_F9)
+    one = -one;
 
   //  Keep angles to +/-360 degrees
   th %= 360;
@@ -247,6 +278,7 @@ void theMenu(int value){
     cameraX=50;
     cameraY =10; 
     cameraZ=25;
+    fov = 55;
     ph = 0;
     th = -60;
   }else if(value == 2){
@@ -679,6 +711,11 @@ static void FighterJet(double x,double y,double z,
   mat[2] = Z0;   mat[6] = Z1;   mat[10] = Z2;   mat[14] = 0;
   mat[3] =  0;   mat[7] =  0;   mat[11] =  0;   mat[15] = 1;
 
+  //For normal vector calculations
+  double aX, aY, aZ;
+  double bX, bY, bZ;
+  double nX, nY, nZ;
+
   //  Save current transforms
   glPushMatrix();
   //  Offset, scale and rotate
@@ -691,18 +728,35 @@ static void FighterJet(double x,double y,double z,
   //  Front Nose (4 sided)
   glColor3f(0,0,1);
   glBegin(GL_TRIANGLES);
+
+  findDispVector(shipBowXend,wid,wid,shipBowXfront,0.0,0.0,&aX,&aY,&aZ);
+  findDispVector(shipBowXend,wid,wid,shipBowXend,-wid,wid,&bX,&bY,&bZ);
+  findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
+
+  //left triangle (-Z)
+  glNormal3d(nX,nY,-nZ);
   glVertex3d(shipBowXfront, 0.0, 0.0);
   glVertex3d(shipBowXend, wid, wid);
   glVertex3d(shipBowXend,-wid, wid);
 
+  //right triangle (Z+)
+  glNormal3d(nX,nY,nZ);
   glVertex3d(shipBowXfront, 0.0, 0.0);
   glVertex3d(shipBowXend, wid,-wid);
   glVertex3d(shipBowXend,-wid,-wid);
 
+  findDispVector(shipBowXend,wid,wid,shipBowXfront,0.0,0.0,&aX,&aY,&aZ);
+  findDispVector(shipBowXend,wid,wid,shipBowXend,wid,-wid,&bX,&bY,&bZ);
+  findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
+
+  //Top triangle
+  glNormal3d(nX,nY,nZ);
   glVertex3d(shipBowXfront, 0.0, 0.0);
   glVertex3d(shipBowXend, wid, wid);
   glVertex3d(shipBowXend, wid,-wid);
 
+  //Bottom triangle
+  glNormal3d(nX,-nY,nZ);
   glVertex3d(shipBowXfront, 0.0, 0.0);
   glVertex3d(shipBowXend,-wid, wid);
   glVertex3d(shipBowXend,-wid,-wid);
@@ -725,27 +779,32 @@ static void FighterJet(double x,double y,double z,
 
   //  Fuselage (square tube)
   glBegin(GL_QUADS);
-  glColor3f(1,0,0);
+  glColor3f(1,1,1);
+  glNormal3d(0,0,1);
   glVertex3d(shipBowXend, wid, wid);
   glVertex3d(shipBowXend,-wid, wid);
   glVertex3d(shipSternX,-wid, wid);
   glVertex3d(shipSternX, wid, wid);
 
+  glNormal3d(0,0,-1);
   glVertex3d(shipBowXend, wid,-wid);
   glVertex3d(shipBowXend,-wid,-wid);
   glVertex3d(shipSternX,-wid,-wid);
   glVertex3d(shipSternX, wid,-wid);
 
+  glNormal3d(0,1,0);
   glVertex3d(shipBowXend, wid, wid);
   glVertex3d(shipBowXend, wid,-wid);
   glVertex3d(shipSternX, wid,-wid);
   glVertex3d(shipSternX, wid, wid);
 
+  glNormal3d(0,-1,0);
   glVertex3d(shipBowXend,-wid, wid);
   glVertex3d(shipBowXend,-wid,-wid);
   glVertex3d(shipSternX,-wid,-wid);
   glVertex3d(shipSternX,-wid, wid);
 
+  glNormal3d(-1,0,0);
   glVertex3d(shipSternX,-wid, wid);
   glVertex3d(shipSternX, wid, wid);
   glVertex3d(shipSternX, wid,-wid);
@@ -756,16 +815,33 @@ static void FighterJet(double x,double y,double z,
   glColor3f(0,1,0);
   halfSphere(cockpitX,1,0,1);
 
+  // ----------------------------------------------------------
+  // Canards
+  // ---------------------------------------------------------
+  glColor3f(0.5,0.5,0.5);
   glBegin(GL_TRIANGLES);
-    //Right Canard
+    //Right Canard (upper)
+    glNormal3d(0,1,0);
     glVertex3d(canardXend, 0, wid);
     glVertex3d(canardXend, 0, canardZ);
     glVertex3d(canardXfront, 0, wid);
 
-    //Left Canard
+    //Right Canard (lower)
+    glNormal3d(0,-1,0);
+    glVertex3d(canardXend, -0.01, wid);
+    glVertex3d(canardXend, -0.10, canardZ);
+    glVertex3d(canardXfront, -0.10, wid);
+
+    //Left Canard (upper)
+    glNormal3d(0,1,0);
     glVertex3d(canardXend, 0, -wid);
     glVertex3d(canardXend, 0, -canardZ);
     glVertex3d(canardXfront, 0, -wid);
+
+    glNormal3d(0,-1,0);
+    glVertex3d(canardXend, -0.01, -wid);
+    glVertex3d(canardXend, -0.01, -canardZ);
+    glVertex3d(canardXfront, -0.01, -wid);
   glEnd();
 
   //Wing tips
@@ -773,40 +849,82 @@ static void FighterJet(double x,double y,double z,
   glColor3f(0,0,1);
   glBegin(GL_LINES);
     //Right wing line
+    glNormal3d(0,1,0);
     glVertex3d(wingLineXend, -wid, wingLineZ);
     glVertex3d(wingLinefrontX, -wid, wingLineZ);
 
+    glNormal3d(0,-1,0);
+    glVertex3d(wingLineXend, -wid-0.01, wingLineZ);
+    glVertex3d(wingLinefrontX, -wid-0.01, wingLineZ);
+
     //Left wing line
+    glNormal3d(0,1,0);
     glVertex3d(wingLineXend, -wid, -wingLineZ);
     glVertex3d(wingLinefrontX, -wid, -wingLineZ);
+
+    glNormal3d(0,-1,0);
+    glVertex3d(wingLineXend, -wid-0.01, -wingLineZ);
+    glVertex3d(wingLinefrontX, -wid-0.01, -wingLineZ);
   glEnd();
   glLineWidth(1);
  
 
-  //  Vertical tail (plane triangle)
+  //  Vertical tail (Z+)
   glColor3f(0,0,1);
   glBegin(GL_POLYGON);
+  glNormal3d(0,0,1);
+    glVertex3d(shipSternX, 6.0, 0.01);
+    glVertex3d(shipSternX, 1.0, 0.01);
+    glVertex3d(wingXend+4, 1.0, 0.01);
+  glEnd();
+
+  //  Vertical tail (-Z)
+  glColor3f(0,0,1);
+  glBegin(GL_POLYGON);
+    glNormal3d(0,0,-1);
     glVertex3d(shipSternX, 6.0, 0.0);
     glVertex3d(shipSternX, 1.0, 0.0);
     glVertex3d(wingXend+4, 1.0, 0.0);
   glEnd();
 
-  glColor3f(0,1,0);
-
-  //Right wing
+  // ----------------------------------------------------------
+  // Wings
+  // ----------------------------------------------------------
+  glColor3f(0.5,0.5,0.5);
+  //Right wing (upper)
   glBegin(GL_POLYGON);
+    glNormal3d(0,1,0);
     glVertex3d(wingXend, -wid, wid);
     glVertex3d(wingXend, -wid, wingZ);
     glVertex3d(wingXfrontFold, -wid, wingZ);
     glVertex3d(wingXfront, -wid, wid);
   glEnd();
 
-  //Left wing
+  //Right wing (lower)
   glBegin(GL_POLYGON);
+    glNormal3d(0,-1,0);
+    glVertex3d(wingXend, -wid-0.01, wid);
+    glVertex3d(wingXend, -wid-0.01, wingZ);
+    glVertex3d(wingXfrontFold-0.01, -wid, wingZ);
+    glVertex3d(wingXfront, -wid-0.01, wid);
+  glEnd();
+
+  //Left wing (upper)
+  glBegin(GL_POLYGON);
+    glNormal3d(0,1,0);
     glVertex3d(wingXend, -wid, -wid);
     glVertex3d(wingXend, -wid, -wingZ);
     glVertex3d(wingXfrontFold, -wid, -wingZ);
     glVertex3d(wingXfront, -wid, -wid);
+  glEnd();
+
+  //Left wing (lower)
+  glBegin(GL_POLYGON);
+    glNormal3d(0,-1,0);
+    glVertex3d(wingXend, -wid-0.01, -wid);
+    glVertex3d(wingXend, -wid-0.01, -wingZ);
+    glVertex3d(wingXfrontFold, -wid-0.01, -wingZ);
+    glVertex3d(wingXfront, -wid-0.01, -wid);
   glEnd();
 
   //  Undo transformations
@@ -895,7 +1013,7 @@ void XB70Bomber(double x,double y,double z,
   double aX, aY, aZ;
   double bX, bY, bZ;
   double nX, nY, nZ;
-  
+
   // ----------------------------------------------------------
   // Nose
   // ----------------------------------------------------------
@@ -904,26 +1022,33 @@ void XB70Bomber(double x,double y,double z,
   glColor3f(0,0,1);
   glBegin(GL_TRIANGLES);
     
-    //Right side nose
-    glNormal3d(0,0,1);
+    //left side nose
+    findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipFrontNoseX, 0.0,0.0, &aX,&aY,&aZ);
+    findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipRearNoseX, -shipFuselageHeight, shipWidth, &bX, &bY, &bZ);
+    findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
+    glNormal3d(nX,nY,-nZ);
     glVertex3d(shipFrontNoseX, 0.0, 0.0);
     glVertex3d(shipRearNoseX, shipFuselageHeight, shipWidth);
     glVertex3d(shipRearNoseX,-shipFuselageHeight, shipWidth);
 
-    //Left side nose
-    glNormal3d(0,0,-1);
+    //Right side nose
+    glNormal3d(nX,nY,nZ);
     glVertex3d(shipFrontNoseX, 0.0, 0.0);
     glVertex3d(shipRearNoseX, shipFuselageHeight,-shipWidth);
     glVertex3d(shipRearNoseX,-shipFuselageHeight,-shipWidth);
 
     //Top side nose
-    glNormal3d(0,1,0);
+    findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipFrontNoseX, 0.0,0.0, &aX,&aY,&aZ);
+    findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipRearNoseX, shipFuselageHeight, -shipWidth, &bX,&bY,&bZ);
+    findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
+
+    glNormal3d(nX,nY,nZ);
     glVertex3d(shipFrontNoseX, 0.0, 0.0);
     glVertex3d(shipRearNoseX, shipFuselageHeight, shipWidth);
     glVertex3d(shipRearNoseX, shipFuselageHeight,-shipWidth);
 
     //Bottom side nose
-    glNormal3d(0,-1,0);
+    glNormal3d(nX,-nY,nZ);
     glVertex3d(shipFrontNoseX, 0.0, 0.0);
     glVertex3d(shipRearNoseX,-shipFuselageHeight, shipWidth);
     glVertex3d(shipRearNoseX,-shipFuselageHeight,-shipWidth);
@@ -1079,7 +1204,7 @@ void XB70Bomber(double x,double y,double z,
   //Left folding wing (bottom portion)
   glColor3f(1,1,1);
   glBegin(GL_POLYGON);
-    glNormal3d(nX,-nY,-nZ);
+    glNormal3d(nX,-nY,nZ);
     glVertex3d(wingsRearX, -shipFuselageHeight, -foldingWingZ);
     glVertex3d(wingsRearX, -foldingWingYHeight-shipFuselageHeight-0.01, -foldingWingZ-2);
     glVertex3d(foldingWingXfront, -shipFuselageHeight, -foldingWingZ);
@@ -1140,7 +1265,6 @@ void XB70Bomber(double x,double y,double z,
   glEnd();
 
   //Right Canard (upper portion)
-  glColor3f(0.5,0.5,0.5);
   glBegin(GL_POLYGON);
     glNormal3d(0,1,0);
     glVertex3d(canardRearX,0+0.01,shipWidth);
@@ -1150,7 +1274,6 @@ void XB70Bomber(double x,double y,double z,
   glEnd();
 
   //Left Canard (bottom portion)
-  glColor3f(0,1,0);
   glBegin(GL_POLYGON);
     glNormal3d(0,-1,0);
     glVertex3d(canardRearX,0,-shipWidth);
@@ -1160,7 +1283,6 @@ void XB70Bomber(double x,double y,double z,
   glEnd();
 
   //Left Canard (upper portion)
-  glColor3f(0.5,0.5,0.5);
   glBegin(GL_POLYGON);
     glNormal3d(0,1,0);
     glVertex3d(canardRearX,0+0.01,-shipWidth);
@@ -1235,7 +1357,7 @@ void key(unsigned char ch,int x,int y){
   if (ch == 27)
     exit(0);
 
-  //Changing Dim only allowed in Orthogonal and Perspective
+  //Changing Dim only allowed in Perspective
   if(projectionMode == 2){
       if (ch == '=' || ch == '+')
       dim -= 1;
@@ -1254,9 +1376,66 @@ void key(unsigned char ch,int x,int y){
     else if(ch == 'd' || ch == 'D')
       strafeRight(cameraLookX, cameraLookY, cameraLookZ, 2);
   }
+
+  if(projectionMode != 1){
+    //  Reset view angle
+    if (ch == '0')
+      th = ph = 0;
+    //  Toggle lighting
+    else if (ch == 'l' || ch == 'L')
+      light = 1-light;
+    //  Toggle light movement
+    else if (ch == 'm' || ch == 'M')
+      move = 1-move;
+    //  Move light
+    else if (ch == '<')
+      zh += 1;
+    else if (ch == '>')
+      zh -= 1;
+    //  Change field of view angle
+    else if (ch == 'z' && ch>1)
+      fov--;
+    else if (ch == 'x' && ch<179)
+      fov++;
+    //  Light elevation
+    else if (ch=='[')
+      ylight -= 0.1;
+    else if (ch==']')
+      ylight += 0.1;
+    //  Ambient level
+    else if (ch=='a' && ambient>0)
+      ambient -= 5;
+    else if (ch=='A' && ambient<100)
+      ambient += 5;
+    //  Diffuse level
+    else if (ch=='d' && diffuse>0)
+      diffuse -= 5;
+    else if (ch=='D' && diffuse<100)
+      diffuse += 5;
+    //  Specular level
+    else if (ch=='s' && specular>0)
+      specular -= 5;
+    else if (ch=='S' && specular<100)
+      specular += 5;
+    //  Emission level
+    else if (ch=='e' && emission>0)
+      emission -= 5;
+    else if (ch=='E' && emission<100)
+      emission += 5;
+    //  Shininess level
+    else if (ch=='n' && shininess>-1)
+      shininess -= 1;
+    else if (ch=='N' && shininess<7)
+      shininess += 1;
+    //  Translate shininess power to value (-1 => 0)
+    shiny = shininess<0 ? 0 : pow(2.0,shininess);
+  }
   
   // Reproject
   Project(fov, asp, dim, projectionMode);
+
+  //  Animate if requested
+  glutIdleFunc(move?idle:NULL);
   
   //  Tell GLUT it is necessary to redisplay the scene
   glutPostRedisplay();
@@ -1366,6 +1545,8 @@ void display(){
   switch(currentScene){
     case 1:
       XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 0.5, 0, 0);
+      FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, 0, 0);
+      FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, 0, 0);
       break;
     case 2:
       FighterJet(20,0,40, 1,0,0, 0,1,0,0.8, 25,0);
@@ -1385,11 +1566,19 @@ void display(){
       XB70Bomber(-30,10,-20, 1,0,0, 0,0,1,0.8, THX, 0);
   }
   
-  //  Display rotation angles
-  glColor3f(1,1,1);
+  //  Display parameters
+  glColor3f(0,1,0);
   glWindowPos2i(5,5);
-  Print("Angle X= %d",ph);
-  Print("   Camera Mode: ");
+  Print("Angle=%d,%d  Dim=%.1f FOV=%d Light=%s",th,ph,dim,fov,light?"On":"Off");
+  if (light)
+  {
+    glWindowPos2i(5,45);
+    Print("Model=%s LocalViewer=%s Distance=%d Elevation=%.1f",smooth?"Smooth":"Flat",local?"On":"Off",distance,ylight);
+    glWindowPos2i(5,25);
+    Print("Ambient=%d  Diffuse=%d Specular=%d Emission=%d Shininess=%.0f",ambient,diffuse,specular,emission,shiny);
+  }
+  glWindowPos2i(5,65);
+  Print("Camera Mode: ");
   if(projectionMode == 1)
     Print(" First Person  ");
   else if (projectionMode == 2)
@@ -1397,19 +1586,7 @@ void display(){
   else if(projectionMode == 3)
     Print(" Orthogonal  ");
 
-  if(projectionMode == 2)
-    Print(" Dim=%.1f",dim);
-
-  if(projectionMode == 1){
-    Print(" CameraX=%.1f",cameraX);
-    Print(" CameraY=%.1f",cameraY);
-    Print(" CameraZ=%.1f",cameraZ);
-  }
-  
-  glWindowPos2i(5,25);
-  Print("Angle Y= %d",th);
-
-  glWindowPos2i(5,45);
+  glWindowPos2i(5,85);
   if(drawAxis == true)
     Print("Axis ON");
   else
@@ -1475,13 +1652,12 @@ void drawAxisLabels(){
 
 // This function is called by GLUT when idle
 void idle(){
-  if(currentScene == 1){
-    time = glutGet(GLUT_ELAPSED_TIME)/1000.0;
-    THX = fmod(60*time,360);
-    THZ = fmod(60*time,360);
-    zh = fmod(90*time,360.0);
-    glutPostRedisplay();
-  }
+  
+  time = glutGet(GLUT_ELAPSED_TIME)/1000.0;
+  THX = fmod(60*time,360);
+  THZ = fmod(60*time,360);
+  zh = fmod(90*time,360.0);
+  glutPostRedisplay();
 }
 
 // This function is called by GLUT when the window is resized
