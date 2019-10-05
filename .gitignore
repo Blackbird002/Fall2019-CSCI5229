@@ -5,3 +5,10 @@ lorenzAttractor/lorenz.o
 3DScene/hw3.exe
 Projections/hw4.o
 Projections/hw4.exe
+Lighting/project.o
+Lighting/print.o
+Lighting/object.o
+Lighting/hw5.o
+Lighting/fatal.o
+Lighting/errcheck.o
+Lighting/loadtexbmp.o
