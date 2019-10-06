@@ -62,7 +62,7 @@ double cameraLookX , cameraLookY , cameraLookZ;
 // XZ position of the camera in 1st person (eye)
 double cameraX=80, cameraY =10 , cameraZ=25;
 
-int th=319;         //  Azimuth of view angle (y)
+int th=321;         //  Azimuth of view angle (y)
 int ph=29;         //  Elevation of view angle (x)
 
 double dim=35;   // Dimension of orthogonal box
@@ -283,12 +283,8 @@ void theMenu(int value){
     th = -60;
   }else if(value == 2){
     projectionMode = 2;
-    th = 245;
-    ph = 45;
   }else if(value == 3){
     projectionMode = 3;
-    th = 245;
-    ph = 45;
   }else if(value == 4){
     if(drawAxis == true)
       drawAxis = false;
@@ -426,6 +422,12 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   const double missleBayXend = -15;
   const double missleBaywid = 3;
   const double missleBayHight = 3;
+
+  const double elevatorY = -4;
+  const double elevatorZ = 4.5;
+  const double elevatorXfront = missleBayXend-2;
+
+  const double canardZ = 3;
   
   //  Unit vector in direction of flght
   double D0 = sqrt(dx*dx+dy*dy+dz*dz);
@@ -451,6 +453,11 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   mat[2] = Z0;   mat[6] = Z1;   mat[10] = Z2;   mat[14] = 0;
   mat[3] =  0;   mat[7] =  0;   mat[11] =  0;   mat[15] = 1;
 
+  //For normal vector calculations
+  double aX, aY, aZ;
+  double bX, bY, bZ;
+  double nX, nY, nZ;
+
   //  Save current transforms
   glPushMatrix();
   //  Offset, scale and rotate
@@ -463,26 +470,44 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   //  Front Nose (4 sided)
   glColor3f(0,0,1);
   glBegin(GL_TRIANGLES);
-  glVertex3d(shipBowXfront, 0.0, 0.0);
-  glVertex3d(shipBowXend, wid, wid);
-  glVertex3d(shipBowXend,-wid, wid);
 
-  glVertex3d(shipBowXfront, 0.0, 0.0);
-  glVertex3d(shipBowXend, wid,-wid);
-  glVertex3d(shipBowXend,-wid,-wid);
+    findDispVector(shipBowXend,wid,-wid,shipBowXfront,0,0,&aX,&aY,&aZ);
+    findDispVector(shipBowXend,wid,-wid,shipBowXend,-wid,-wid,&bX,&bY,&bZ);
+    findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
 
-  glVertex3d(shipBowXfront, 0.0, 0.0);
-  glVertex3d(shipBowXend, wid, wid);
-  glVertex3d(shipBowXend, wid,-wid);
+    //left triangle (-Z)
+    glNormal3d(nX,nY,-nZ);
+    glVertex3d(shipBowXfront, 0.0, 0.0);
+    glVertex3d(shipBowXend, wid, wid);
+    glVertex3d(shipBowXend,-wid, wid);
 
-  glVertex3d(shipBowXfront, 0.0, 0.0);
-  glVertex3d(shipBowXend,-wid, wid);
-  glVertex3d(shipBowXend,-wid,-wid);
+    //right triangle (Z+)
+    glNormal3d(nX,nY,nZ);
+    glVertex3d(shipBowXfront, 0.0, 0.0);
+    glVertex3d(shipBowXend, wid,-wid);
+    glVertex3d(shipBowXend,-wid,-wid);
+
+    //Top triangle
+    findDispVector(shipBowXend,wid,-wid,shipBowXfront,0,0,&aX,&aY,&aZ);
+    findDispVector(shipBowXend,wid,-wid,shipBowXend,-wid,wid,&aX,&aY,&aZ);
+    findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
+
+    glNormal3d(nX,nY,nZ);
+    glVertex3d(shipBowXfront, 0.0, 0.0);
+    glVertex3d(shipBowXend, wid, wid);
+    glVertex3d(shipBowXend, wid,-wid);
+
+    //Bottom triangle
+    glNormal3d(nX,-nY,nZ);
+    glVertex3d(shipBowXfront, 0.0, 0.0);
+    glVertex3d(shipBowXend,-wid, wid);
+    glVertex3d(shipBowXend,-wid,-wid);
   glEnd();
 
   //Front tip
   glBegin(GL_LINES);
     glColor3f(0, 1, 0); 
+    glNormal3d(1,0,0);
     glVertex3f(shipBowXfront, 0, 0);
     glVertex3f(shipBowXfront+2, 0, 0);
     glVertex3f(shipBowXfront+2, 0, 0);
@@ -495,29 +520,38 @@ static void ArtemisSpaceBomber(double x,double y,double z,
     glVertex3f(shipBowXfront+2, 0, -1);
   glEnd();
 
+  // ----------------------------------------------------------
+  // Fuselage
+  // ----------------------------------------------------------
+
   //  Fuselage (square tube)
   glBegin(GL_QUADS);
-  glColor3f(1,0,0);
+  glColor3f(1,1,1);
+  glNormal3d(0,0,1);
   glVertex3d(shipBowXend, wid, wid);
   glVertex3d(shipBowXend,-wid, wid);
   glVertex3d(shipSternX,-wid, wid);
   glVertex3d(shipSternX, wid, wid);
 
+  glNormal3d(0,0,-1);
   glVertex3d(shipBowXend, wid,-wid);
   glVertex3d(shipBowXend,-wid,-wid);
   glVertex3d(shipSternX,-wid,-wid);
   glVertex3d(shipSternX, wid,-wid);
 
+  glNormal3d(0,1,0);
   glVertex3d(shipBowXend, wid, wid);
   glVertex3d(shipBowXend, wid,-wid);
   glVertex3d(shipSternX, wid,-wid);
   glVertex3d(shipSternX, wid, wid);
 
+  glNormal3d(0,-1,0);
   glVertex3d(shipBowXend,-wid, wid);
   glVertex3d(shipBowXend,-wid,-wid);
   glVertex3d(shipSternX,-wid,-wid);
   glVertex3d(shipSternX,-wid, wid);
 
+  glNormal3d(-1,0,0);
   glVertex3d(shipSternX,-wid, wid);
   glVertex3d(shipSternX, wid, wid);
   glVertex3d(shipSternX, wid,-wid);
@@ -528,58 +562,91 @@ static void ArtemisSpaceBomber(double x,double y,double z,
   glColor3f(0,1,0);
   halfSphere(cockpitX,1,0,1);
 
-  //Right Canard
-  glColor3f(0,1,0);
+  // ----------------------------------------------------------
+  // Canards
+  // ----------------------------------------------------------
+
+  //Right Canard (upper)
+  glColor3f(0.5,0.5,0.5);
   glBegin(GL_POLYGON);
+    glNormal3d(0,1,0);
     glVertex3d(-7,0,wid);
     glVertex3d(-4,0,wid);
-    glVertex3d(-5,0,wid+1);
-    glVertex3d(-6,0,wid+1);
+    glVertex3d(-5,0,canardZ);
+    glVertex3d(-6,0,canardZ);
   glEnd();
 
-  //Left Canard
-  glColor3f(0,1,0);
+  //Right Canard (lower)
   glBegin(GL_POLYGON);
+    glNormal3d(0,-1,0);
+    glVertex3d(-7,-0.01,wid);
+    glVertex3d(-4,-0.01,wid);
+    glVertex3d(-5,-0.01,canardZ-0.01);
+    glVertex3d(-6,-0.01,canardZ-0.01);
+  glEnd();
+
+  //Left Canard (Upper)
+  glBegin(GL_POLYGON);
+    glNormal3d(0,1,0);
     glVertex3d(-7,0,-wid);
     glVertex3d(-4,0,-wid);
-    glVertex3d(-5,0,-wid-1);
-    glVertex3d(-6,0,-wid-1);
+    glVertex3d(-5,0,-canardZ);
+    glVertex3d(-6,0,-canardZ);
   glEnd();
 
+  //Left Canard (Lower)
+  glBegin(GL_POLYGON);
+    glNormal3d(0,-1,0);
+    glVertex3d(-7,-0.01,-wid);
+    glVertex3d(-4,-0.01,-wid);
+    glVertex3d(-5,-0.01,-canardZ-0.01);
+    glVertex3d(-6,-0.01,-canardZ-0.01);
+  glEnd();
+
+  // ----------------------------------------------------------
+  // Missle Bays
+  // ----------------------------------------------------------
+
   //  Right missle bay
-  glColor3f(0,0,1);
+  glColor3f(0.5,0.5,0.5);
   glBegin(GL_QUADS);
     //Outside side
+    glNormal3d(0,0,1);
     glVertex3d(missleBayXfront, missleBayHight, missleBaywid+wid);
     glVertex3d(missleBayXfront,-missleBayHight, missleBaywid+wid);
     glVertex3d(missleBayXend,-missleBayHight, missleBaywid+wid);
     glVertex3d(missleBayXend, missleBayHight, missleBaywid+wid);
 
     //Inside side
+    glNormal3d(0,0,-1);
     glVertex3d(missleBayXend, missleBayHight, wid);
     glVertex3d(missleBayXend, -missleBayHight, wid);
     glVertex3d(missleBayXfront, -missleBayHight, wid);
     glVertex3d(missleBayXfront, missleBayHight, wid);
 
     //Top side
+    glNormal3d(0,1,0);
     glVertex3d(missleBayXend, missleBayHight, wid);
     glVertex3d(missleBayXend, missleBayHight, missleBaywid + wid);
     glVertex3d(missleBayXfront, missleBayHight, missleBaywid + wid);
     glVertex3d(missleBayXfront, missleBayHight, wid);
 
     //Bottom side
+    glNormal3d(0,-1,0);
     glVertex3d(missleBayXend, -missleBayHight, wid);
     glVertex3d(missleBayXend, -missleBayHight, missleBaywid + wid);
     glVertex3d(missleBayXfront, -missleBayHight, missleBaywid + wid);
     glVertex3d(missleBayXfront, -missleBayHight, wid);
 
     //Front face of missle bay
+    glNormal3d(1,0,0);
     glVertex3d(missleBayXfront,missleBayHight,missleBaywid + wid);
     glVertex3d(missleBayXfront,-missleBayHight,missleBaywid + wid);
     glVertex3d(missleBayXfront,-missleBayHight,wid);
     glVertex3d(missleBayXfront,missleBayHight,wid);
 
     //Back face of missle bay
+    glNormal3d(-1,0,0);
     glVertex3d(missleBayXend,missleBayHight,missleBaywid + wid);
     glVertex3d(missleBayXend,-missleBayHight,missleBaywid + wid);
     glVertex3d(missleBayXend,-missleBayHight,wid);
@@ -588,62 +655,111 @@ static void ArtemisSpaceBomber(double x,double y,double z,
 
   //  Left missle bay
   glBegin(GL_QUADS);
+    //Outside side
+    glNormal3d(0,0,-1);
     glVertex3d(missleBayXfront, missleBayHight, -missleBaywid-wid);
     glVertex3d(missleBayXfront,-missleBayHight, -missleBaywid-wid);
     glVertex3d(missleBayXend,-missleBayHight, -missleBaywid-wid);
     glVertex3d(missleBayXend, missleBayHight, -missleBaywid-wid);
 
+    //Inside side
+    glNormal3d(0,0,1);
     glVertex3d(missleBayXend, missleBayHight, -wid);
     glVertex3d(missleBayXend, -missleBayHight, -wid);
     glVertex3d(missleBayXfront, -missleBayHight, -wid);
     glVertex3d(missleBayXfront, missleBayHight, -wid);
 
-
+    //Top side
+    glNormal3d(0,1,0);
     glVertex3d(missleBayXend, missleBayHight, -wid);
     glVertex3d(missleBayXend, missleBayHight, -missleBaywid - wid);
     glVertex3d(missleBayXfront, missleBayHight, -missleBaywid - wid);
     glVertex3d(missleBayXfront, missleBayHight, -wid);
 
+    //Bottom side
+    glNormal3d(0,-1,0);
     glVertex3d(missleBayXend, -missleBayHight, -wid);
     glVertex3d(missleBayXend, -missleBayHight, -missleBaywid - wid);
     glVertex3d(missleBayXfront, -missleBayHight, -missleBaywid - wid);
     glVertex3d(missleBayXfront, -missleBayHight, -wid);
 
     //Front face of missle bay
+    glNormal3d(1,0,0);
     glVertex3d(missleBayXfront,missleBayHight,-missleBaywid - wid);
     glVertex3d(missleBayXfront,-missleBayHight,-missleBaywid - wid);
     glVertex3d(missleBayXfront,-missleBayHight,-wid);
     glVertex3d(missleBayXfront,missleBayHight,-wid);
 
     //Back face of missle bay
+    glNormal3d(-1,0,0);
     glVertex3d(missleBayXend,missleBayHight,-missleBaywid - wid);
     glVertex3d(missleBayXend,-missleBayHight,-missleBaywid - wid);
     glVertex3d(missleBayXend,-missleBayHight,-wid);
     glVertex3d(missleBayXend,missleBayHight,-wid);
   glEnd();
 
-  //  Vertical tail (plane triangle)
-  glColor3f(0,1,0);
+  // ----------------------------------------------------------
+  // Vertical tail
+  // ----------------------------------------------------------
+
+  //  Vertical tail (-Z)
+  glColor3f(0,0,1);
   glBegin(GL_POLYGON);
-  glVertex3d(shipSternX, 6.0, 0.0);
-  glVertex3d(shipSternX, 1.0, 0.0);
-  glVertex3d(missleBayXend, 1.0, 0.0);
+    glNormal3d(0,0,-1);
+    glVertex3d(shipSternX, 6.0, -0.01);
+    glVertex3d(shipSternX, 1.0, -0.01);
+    glVertex3d(missleBayXend, 1.0, -0.01);
   glEnd();
 
-  //  Right Elevator
-  glColor3f(0,1,0);
+  //  Vertical tail (+Z)
+  glColor3f(0,0,1);
   glBegin(GL_POLYGON);
-  glVertex3d(shipSternX,-1.0, 1.0);
-  glVertex3d(shipSternX,-4.0, 3.0);
-  glVertex3d(missleBayXend-2,-1.0, 1.0);
+    glNormal3d(0,0,1);
+    glVertex3d(shipSternX, 6.0, 0.0);
+    glVertex3d(shipSternX, 1.0, 0.0);
+    glVertex3d(missleBayXend, 1.0, 0.0);
   glEnd();
 
-  //  Left Elevator
-  glColor3f(0,1,0);
+  // ----------------------------------------------------------
+  // Elevators
+  // ----------------------------------------------------------
+
+  //  Right Elevator (upper)
+  findDispVector(elevatorXfront,-wid,-wid,shipSternX,-wid,-wid,&aX,&aY,&aZ);
+  findDispVector(shipSternX, -wid, -wid,shipSternX, elevatorY, elevatorZ, &bX,&bY,&bZ);
+  findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
+
+  glColor3f(0.5,0.5,0.5);
   glBegin(GL_POLYGON);
+    glNormal3d(nX,nY,nZ);
+    glVertex3d(shipSternX,-1.0, 1.0);
+    glVertex3d(shipSternX,elevatorY, elevatorZ);
+    glVertex3d(elevatorXfront,-1.0, 1.0);
+  glEnd();
+
+  //  Right Elevator (lower)
+  glColor3f(0.5,0.5,0.5);
+  glBegin(GL_POLYGON);
+    glNormal3d(nX,-nY,nZ);
+    glVertex3d(shipSternX,-1.0-0.01, 1.0);
+    glVertex3d(shipSternX,elevatorY-0.01, elevatorZ);
+    glVertex3d(elevatorXfront,-1.0-0.01, 1.0);
+  glEnd();
+
+  //  Left Elevator (upper)
+  glBegin(GL_POLYGON);
+  glNormal3d(nX,nY,-nZ);
   glVertex3d(shipSternX,-1.0, -1.0);
-  glVertex3d(shipSternX,-4.0, -3.0);
-  glVertex3d(missleBayXend-2,-1.0, -1.0);
+  glVertex3d(shipSternX,elevatorY, -elevatorZ);
+  glVertex3d(elevatorXfront,-1.0, -1.0);
+  glEnd();
+
+  //  Left Elevator (lower)
+  glBegin(GL_POLYGON);
+  glNormal3d(nX,-nY,-nZ);
+  glVertex3d(shipSternX,-1.0-0.01, -1.0);
+  glVertex3d(shipSternX,elevatorY-0.01, -elevatorZ);
+  glVertex3d(elevatorXfront,-1.0-0.01, -1.0);
   glEnd();
 
   //  Undo transformations
@@ -1515,7 +1631,7 @@ void display(){
     float Position[]  = {distance*Cos(zh),ylight,distance*Sin(zh),1.0};
     //  Draw light position as ball (still no lighting here)
     glColor3f(1,1,1);
-    ball(Position[0],Position[1],Position[2] , 0.5);
+    ball(Position[0],Position[1],Position[2] , 0.25);
     //  OpenGL should normalize normal vectors
     glEnable(GL_NORMALIZE);
     //  Enable lighting
@@ -1544,26 +1660,26 @@ void display(){
 
   switch(currentScene){
     case 1:
-      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 0.5, 0, 0);
-      FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, 0, 0);
-      FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, 0, 0);
+      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 0.5, 0, 5);
+      FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, 0, 5);
+      FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, 0, 5);
+      ArtemisSpaceBomber(0,15,0 , 1,0,0, 0,1,0, 0.5, 0, 0);
       break;
     case 2:
-      FighterJet(20,0,40, 1,0,0, 0,1,0,0.8, 25,0);
-      FighterJet(20,0,-40, 1,0,0, 0,1,0,0.8, -25,0);
-      FighterJet(-40,20,0, 1,0,0, 0,1,0,0.8, 0, 25);
-      XB70Bomber(50,10,0 , 1,0,0, 0,1,0,0.8, 0, 10);
-      FighterJet(60,-20,0, 1,0,0, 0,-1,0,0.8, 0, 25);
-      XB70Bomber(0,20,40 , 1,0,0, 0,1,0,0.5, 0, 25);
-      XB70Bomber(0,20,-40 , 1,0,0, 0,1,0,0.5, -25, -25);
+      FighterJet(10,5,20, 1,0,0, 0,1,0,0.5, 25,0);
+      FighterJet(10,5,-20, 1,0,0, 0,1,0,0.5, -25,0);
+      FighterJet(-10,20,0, 1,0,0, 0,1,0,0.5, 0, 25);
+      XB70Bomber(20,10,0 , 1,0,0, 0,1,0,0.5, 0, 10);
+      FighterJet(20,-20,0, 1,0,0, 0,-1,0,0.5, 0, 25);
+      XB70Bomber(-10,20,20 , 1,0,0, 0,1,0,0.5, 0, 25);
+      XB70Bomber(-10,20,-20 , 1,0,0, 0,1,0,0.5, -25, -25);
       break;
     case 3:
-      FighterJet(-10,-10,30, 1,0,0, 0,1,0,0.8, THX,0);
-      XB70Bomber(50,10,-20, 1,0,0, 0,1,0,0.8, -THX, 0);
-      FighterJet(-10,-20,-30, 1,0,0, 0,1,0,0.8, 0,-THZ);
-      FighterJet(20,20,25, 1,0,0, 0,1,0,0.8, -THX,0);
-      ArtemisSpaceBomber(40, -20, -10, 1,0,0, 0,1,0,0.8, -THX,0);
-      XB70Bomber(-30,10,-20, 1,0,0, 0,0,1,0.8, THX, 0);
+      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 0.5, THX+90, 0);
+      FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, -THX, 10);
+      FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, THX, 10);
+      ArtemisSpaceBomber(0,15,0 , 1,0,0, 0,1,0, 0.5, THX, 0);
+      break; 
   }
   
   //  Display parameters
