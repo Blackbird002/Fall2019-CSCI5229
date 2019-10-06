@@ -84,23 +84,22 @@ double THX;
 double THZ;
 double time;
 
-int move=1;       //  Move light
-
 // Light values
-int light = 1;        //  Lighting
+int light     =   1;  //  Lighting
 int one       =   1;  // Unit value
-int distance  =   20;  // Light distance
+int distance  =   20; // Light distance
 int inc       =  10;  // Ball increment
 int smooth    =   1;  // Smooth/Flat shading
 int local     =   0;  // Local Viewer Model
 int emission  =   0;  // Emission intensity (%)
-int ambient   =  30;  // Ambient intensity (%)
+int ambient   =  25;  // Ambient intensity (%)
 int diffuse   = 100;  // Diffuse intensity (%)
 int specular  =   0;  // Specular intensity (%)
 int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;  // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
+int move      =   1;  //  Move light
 
 // ----------------------------------------------------------
 // Function Prototypes
@@ -1663,7 +1662,7 @@ void display(){
       XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 0.5, 0, 5);
       FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, 0, 5);
       FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, 0, 5);
-      ArtemisSpaceBomber(0,15,0 , 1,0,0, 0,1,0, 0.5, 0, 0);
+      ArtemisSpaceBomber(0,8,0 , 1,0,0, 0,1,0, 0.5, 0, 0);
       break;
     case 2:
       FighterJet(10,5,20, 1,0,0, 0,1,0,0.5, 25,0);
