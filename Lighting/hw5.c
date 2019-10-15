@@ -16,12 +16,13 @@ Key bindings:
   U Arrow - Look down (Camera)
   D Arrow - Look down (Camera)
 
-  In Perspective mode:
+  In Perspective mode (default):
   Use keyboard arrow keys to spin the axis lines
   (left/right about the y axis)
   (up/down about the x axis)
   =/+     - Decrease dim (zoom in)
   -/_     - Increase dim (zoom out)
+  z/x        Change field of view of perspective camera only
 
   Orthogonal mode:
   Use keyboard arrow keys to spin the axis lines
@@ -42,12 +43,8 @@ Key bindings:
   F9         Invert bottom normal
   m          Toggles light movement
   []         Lower/rise light
-  p          Toggles ortogonal/perspective projection
-  z/x        Change field of view of perspective
   arrows     Change view angle
-  PgDn/PgUp  Zoom in and out
   0          Reset view angle
-  ESC        Exit
 */
 
 #include "CSCIx229.h"
@@ -281,6 +278,7 @@ void theMenu(int value){
     ph = 0;
     th = -60;
   }else if(value == 2){
+    fov=55;
     projectionMode = 2;
   }else if(value == 3){
     projectionMode = 3;
@@ -879,6 +877,7 @@ static void FighterJet(double x,double y,double z,
 
   //Front tip
   glBegin(GL_LINES);
+    glNormal3d(1,0,0);
     glColor3f(0, 1, 0); 
     glVertex3f(shipBowXfront, 0, 0);
     glVertex3f(shipBowXfront+2, 0, 0);
@@ -943,9 +942,9 @@ static void FighterJet(double x,double y,double z,
 
     //Right Canard (lower)
     glNormal3d(0,-1,0);
-    glVertex3d(canardXend, -0.01, wid);
-    glVertex3d(canardXend, -0.10, canardZ);
-    glVertex3d(canardXfront, -0.10, wid);
+    glVertex3d(canardXend, -0.001, wid);
+    glVertex3d(canardXend, -0.001, canardZ);
+    glVertex3d(canardXfront, -0.001, wid);
 
     //Left Canard (upper)
     glNormal3d(0,1,0);
@@ -954,9 +953,9 @@ static void FighterJet(double x,double y,double z,
     glVertex3d(canardXfront, 0, -wid);
 
     glNormal3d(0,-1,0);
-    glVertex3d(canardXend, -0.01, -wid);
-    glVertex3d(canardXend, -0.01, -canardZ);
-    glVertex3d(canardXfront, -0.01, -wid);
+    glVertex3d(canardXend, -0.001, -wid);
+    glVertex3d(canardXend, -0.001, -canardZ);
+    glVertex3d(canardXfront, -0.001, -wid);
   glEnd();
 
   //Wing tips
@@ -1480,7 +1479,7 @@ void key(unsigned char ch,int x,int y){
       dim += 1;
   }
 
-  //Moving camera only in First person
+  //Moving camera only in First person & FOV
   if (projectionMode == 1){
     if(ch == 'w' || ch =='W')
       moveForward(cameraLookX, cameraLookY, cameraLookZ, 2);
@@ -1490,6 +1489,12 @@ void key(unsigned char ch,int x,int y){
       strafeLeft(cameraLookX, cameraLookY, cameraLookZ, 2);
     else if(ch == 'd' || ch == 'D')
       strafeRight(cameraLookX, cameraLookY, cameraLookZ, 2);
+      //  Change field of view angle
+    else if (ch == 'z' && ch>1){
+        fov--;   
+    }else if (ch == 'x' && ch<179){
+        fov++;
+    }
   }
 
   if(projectionMode != 1){
@@ -1508,10 +1513,13 @@ void key(unsigned char ch,int x,int y){
     else if (ch == '>')
       zh -= 1;
     //  Change field of view angle
-    else if (ch == 'z' && ch>1)
-      fov--;
-    else if (ch == 'x' && ch<179)
-      fov++;
+    else if (ch == 'z' && ch>1){
+      if(projectionMode == 2)
+        fov--;   
+    }else if (ch == 'x' && ch<179){
+      if(projectionMode == 2)
+        fov++;
+    }
     //  Light elevation
     else if (ch=='[')
       ylight -= 0.1;
@@ -1799,11 +1807,11 @@ int main(int argc, char* argv[]){
 
   // Set window position 
   // Center of Screen -> (source: Kornel Kisielewicz StackOverflow)
-  glutInitWindowPosition((glutGet(GLUT_SCREEN_WIDTH)-800)/2,
-                       (glutGet(GLUT_SCREEN_HEIGHT)-600)/2);
+  glutInitWindowPosition((glutGet(GLUT_SCREEN_WIDTH)-1280)/2,
+                       (glutGet(GLUT_SCREEN_HEIGHT)-720)/2);
 
   // Set window size
-  glutInitWindowSize(800,600);
+  glutInitWindowSize(1280,720);
 
   // Create window
   glutCreateWindow("hw5 Riad Shash (Ray)");
