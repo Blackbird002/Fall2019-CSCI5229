@@ -14,3 +14,14 @@ Lighting/errcheck.o
 Lighting/loadtexbmp.o
 Lighting/hw5.exe
 
+Lighting/hw5
+Textures/hw6
+Textures/print.o
+Textures/project.o
+Textures/hw6.o
+Textures/fatal.o
+Textures/errcheck.o
+Textures/CSCIx229.a
+Textures/object.o
+lorenzAttractor/lorenz
+Textures/loadtexbmp.o
