@@ -121,7 +121,7 @@ void findDispVector(double x1, double y1, double z1, double x2, double y2, doubl
 void findNormalVector(double x1, double y1, double z1, double x2, double y2, double z2, double* uX, double* uY, double* uZ);
 void key(unsigned char ch,int x,int y);
 static void ball(double x,double y,double z,double r);
-static void halfSphere(double x,double y,double z,double r);
+static void Sphere(double x,double y,double z,double r);
 static void ArtemisSpaceBomber(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale, double thx, double thz);
@@ -131,6 +131,51 @@ static void FighterJet(double x,double y,double z,
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale, double thx, double thz);
+
+
+char cubeFaceStr[6][20] = {
+  "right.jpg",
+  "left.jpg",
+  "top.jpg",
+  "bottom.jpg",
+  "front.jpg",
+  "back.jpg"
+};
+
+
+unsigned int loadCubemap(char faces[][20])
+{
+  unsigned int textureID;
+  glGenTextures(1, &textureID);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+  int width, height, nrChannels;
+  for (unsigned int i = 0; i < 5; i++)
+  {
+      unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+      if (data)
+      {
+          glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                        0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+          );
+          stbi_image_free(data);
+      }
+      else
+      {
+          std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+          stbi_image_free(data);
+      }
+  }
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+  return textureID;
+}  
+
+
 // ----------------------------------------------------------
 // special() Callback function
 // ----------------------------------------------------------
@@ -311,15 +356,17 @@ void theMenu(int value){
 /*
  *  Draw vertex in polar coordinates with normal
  */
-static void Vertex(double th,double ph)
+/*
+ *  Draw vertex in polar coordinates
+ */
+static void Vertex(int th,int ph)
 {
-   double x = Sin(th)*Cos(ph);
-   double y = Cos(th)*Cos(ph);
-   double z =         Sin(ph);
-   //  For a sphere at the origin, the position
-   //  and normal vectors are the same
-   glNormal3d(x,y,z);
-   glVertex3d(x,y,z);
+  double x = Cos(th)*Cos(ph);
+  double y = Sin(th)*Cos(ph);
+  double z =         Sin(ph);
+  glNormal3d(x,y,z);
+  glTexCoord2d(th/360.0,ph/180.0+0.5);
+  glVertex3d(x,y,z);
 }
 
 /*
@@ -362,7 +409,7 @@ static void ball(double x,double y,double z,double r)
  *     at (x,y,z)
  *     radius (r)
  */
-static void halfSphere(double x,double y,double z,double r)
+static void Sphere(double x,double y,double z,double r)
 {
   const int d=10;
   int th,ph;
@@ -386,6 +433,7 @@ static void halfSphere(double x,double y,double z,double r)
     for (th=0;th<=360;th+=d)
     {
       Vertex(th,ph);
+      glTexCoord2f(th/360.0,ph/90.0);
       Vertex(th,ph+d);
     }
     glEnd();
@@ -561,7 +609,7 @@ static void ArtemisSpaceBomber(double x,double y,double z,
 
   //  Cockpit
   glColor3f(0,1,0);
-  halfSphere(cockpitX,1,0,1);
+  Sphere(cockpitX,1,0,1);
 
   // ----------------------------------------------------------
   // Canards
@@ -931,7 +979,7 @@ static void FighterJet(double x,double y,double z,
 
   //  Cockpit
   glColor3f(0,1,0);
-  halfSphere(cockpitX,1,0,1);
+  Sphere(cockpitX,1,0,1);
 
   // ----------------------------------------------------------
   // Canards
@@ -1069,7 +1117,7 @@ void XB70Bomber(double x,double y,double z,
   const double shipFrontNoseX = 1.0;
   const double shipRearNoseX = -9.0;
   const double shipWidth = 2.0;
-  const double cockpitLocX = shipRearNoseX - shipWidth + 2;
+  const double cockpitLocX = shipRearNoseX - shipWidth + 2.25;
   const double shipRearX = -60.0;
   const double wingsFrontX = -20.0;
   const double wingsRearX = -60.0;
@@ -1491,8 +1539,9 @@ void XB70Bomber(double x,double y,double z,
   // ----------------------------------------------------------
   // Cockpit
   // ----------------------------------------------------------
-  glColor3f(0,1,0);
-  halfSphere(cockpitLocX,shipFuselageHeight - 0.8,0,shipWidth - 0.25);
+  glColor3f(0.5,0.5,1);
+  glBindTexture(GL_TEXTURE_2D,texture[3]);
+  Sphere(cockpitLocX,shipFuselageHeight - 0.8,0,shipWidth - 0.25);
 
   //  Undo transformations
   glPopMatrix();
@@ -1868,6 +1917,7 @@ int main(int argc, char* argv[]){
   texture[0] = LoadTexBMP("WhiteMetal.bmp");
   texture[1] = LoadTexBMP("MetalUs.bmp");
   texture[2] = LoadTexBMP("al.bmp");
+  texture[3] = LoadTexBMP("glass.bmp");
 
   //  Pass control to GLUT for events
   glutMainLoop();
