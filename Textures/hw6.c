@@ -48,7 +48,6 @@ Key bindings:
 */
 
 #include "CSCIx229.h"
-#include "stb_image.h"
 
 // ----------------------------------------------------------
 // Global Variables
@@ -58,12 +57,12 @@ Key bindings:
 double cameraLookX , cameraLookY , cameraLookZ;
 
 // XZ position of the camera in 1st person (eye)
-double cameraX=80, cameraY =10 , cameraZ=25;
+double cameraX=50, cameraY =10 , cameraZ=25;
 
 int th=321;         //  Azimuth of view angle (y)
 int ph=29;         //  Elevation of view angle (x)
 
-double dim=35;   // Dimension of orthogonal box
+double dim=150;   // Dimension of orthogonal box
 double PI = 3.14159;
 int currentScene = 1;
 bool drawAxis = true;
@@ -85,7 +84,7 @@ double time;
 // Light values
 int light     =   1;  //  Lighting
 int one       =   1;  // Unit value
-int distance  =   20; // Light distance
+int distance  =  50; // Light distance
 int inc       =  10;  // Ball increment
 int smooth    =   1;  // Smooth/Flat shading
 int local     =   0;  // Local Viewer Model
@@ -98,7 +97,7 @@ float shiny   =   1;  // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
 int move      =   1;  //  Move light
-unsigned int texture[5]; // Texture names
+unsigned int texture[11]; // Texture names
 
 //Texture settings
 int mode=0;       //  Texture mode
@@ -130,19 +129,9 @@ static void FighterJet(double x,double y,double z,
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale, double thx, double thz);
-void cube(double x,double y,double z,
-          double dx,double dy,double dz,
-          double th);
-unsigned int loadCubemap(char faces[][20]);
-
-char cubeFaceStr[6][20] = {
-  "right.jpg",
-  "left.jpg",
-  "top.jpg",
-  "bottom.jpg",
-  "front.jpg",
-  "back.jpg"
-};
+static void cube(double x,double y,double z,
+                 double dx,double dy,double dz,
+                 double th);
 
 /*
  *  Draw a cube
@@ -150,116 +139,90 @@ char cubeFaceStr[6][20] = {
  *     dimensions (dx,dy,dz)
  *     rotated th about the y axis
  */
-void cube(double x,double y,double z,
-          double dx,double dy,double dz,
-          double th)
+static void cube(double x,double y,double z,
+                 double dx,double dy,double dz,
+                 double th)
 {
-   //  Set specular color to white
-   float white[] = {1,1,1,1};
-   float Emission[]  = {0.0,0.0,0.01*emission,1.0};
-   glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shiny);
-   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,white);
-   glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
-   //  Save transformation
-   glPushMatrix();
-   //  Offset, scale and rotate
-   glTranslated(x,y,z);
-   glRotated(th,0,1,0);
-   glScaled(dx,dy,dz);
-   //  Enable textures
-   glEnable(GL_TEXTURE_3D);
-   glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,mode?GL_REPLACE:GL_MODULATE);
-   glColor3f(1,1,1);
+  //  Set specular color to white
+  float white[] = {1,1,1,1};
+  float Emission[]  = {0.0,0.0,0.01*emission,1.0};
+  glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shiny);
+  glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,white);
+  glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
+  //  Save transformation
+  glPushMatrix();
+  //  Offset, scale and rotate
+  glTranslated(x,y,z);
+  glRotated(th,0,1,0);
+  glScaled(dx,dy,dz);
+  //  Enable textures
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,mode?GL_REPLACE:GL_MODULATE);
+  glColor3f(1,1,1);
 
-   //  Front
-   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
-   glBegin(GL_QUADS);
+  //  Front
+  glBindTexture(GL_TEXTURE_2D,texture[5]);
+  glBegin(GL_QUADS);
     glNormal3f( 0, 0, 1);
-    glTexCoord3f(1,1,1); glVertex3f(-1,-1, 1);
-    glTexCoord3f(1,1,1); glVertex3f(+1,-1, 1);
-    glTexCoord3f(1,1,1); glVertex3f(+1,+1, 1);
-    glTexCoord3f(-1,1,1); glVertex3f(-1,+1, 1);
-   glEnd();
-   //  Back
-   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
-   glBegin(GL_QUADS);
+    glTexCoord2f(0,0); glVertex3f(-1,-1, 1);
+    glTexCoord2f(1,0); glVertex3f(+1,-1, 1);
+    glTexCoord2f(1,1); glVertex3f(+1,+1, 1);
+    glTexCoord2f(0,1); glVertex3f(-1,+1, 1);
+  glEnd();
+
+  //  Back
+  glBindTexture(GL_TEXTURE_2D,texture[10]);
+  glBegin(GL_QUADS);
     glNormal3f( 0, 0,-1);
-    glTexCoord3f(1,-1,-1); glVertex3f(+1,-1,-1);
-    glTexCoord3f(-1,-1,-1); glVertex3f(-1,-1,-1);
-    glTexCoord3f(-1,1,-1); glVertex3f(-1,+1,-1);
-    glTexCoord3f(1,1,-1); glVertex3f(+1,+1,-1);
-   glEnd();
-   //  Right
-   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
-   glBegin(GL_QUADS);
+    glTexCoord2f(0,0); glVertex3f(+1,-1,-1);
+    glTexCoord2f(1,0); glVertex3f(-1,-1,-1);
+    glTexCoord2f(1,1); glVertex3f(-1,+1,-1);
+    glTexCoord2f(0,1); glVertex3f(+1,+1,-1);
+  glEnd();
+
+  //  Right
+  glBindTexture(GL_TEXTURE_2D,texture[7]);
+  glBegin(GL_QUADS);
     glNormal3f(+1, 0, 0);
-    glTexCoord3f(1,-1,1); glVertex3f(+1,-1,+1);
-    glTexCoord3f(1,-1,-1); glVertex3f(+1,-1,-1);
-    glTexCoord3f(1,1,-1); glVertex3f(+1,+1,-1);
-    glTexCoord3f(1,1,1); glVertex3f(+1,+1,+1);
-    glEnd();
-   //  Left
-   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
-   glBegin(GL_QUADS);
+    glTexCoord2f(0,0); glVertex3f(+1,-1,+1);
+    glTexCoord2f(1,0); glVertex3f(+1,-1,-1);
+    glTexCoord2f(1,1); glVertex3f(+1,+1,-1);
+    glTexCoord2f(0,1); glVertex3f(+1,+1,+1);
+  glEnd();
+
+  //  Left
+  glBindTexture(GL_TEXTURE_2D,texture[6]);
+  glBegin(GL_QUADS);
     glNormal3f(-1, 0, 0);
-    glTexCoord3f(-1,-1,-1); glVertex3f(-1,-1,-1);
-    glTexCoord3f(-1,-1,1); glVertex3f(-1,-1,+1);
-    glTexCoord3f(-1,1,1); glVertex3f(-1,+1,+1);
-    glTexCoord3f(-1,1,-1); glVertex3f(-1,+1,-1);
-   glEnd();
-   //  Top
-   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
-   glBegin(GL_QUADS);
+    glTexCoord2f(0,0); glVertex3f(-1,-1,-1);
+    glTexCoord2f(1,0); glVertex3f(-1,-1,+1);
+    glTexCoord2f(1,1); glVertex3f(-1,+1,+1);
+    glTexCoord2f(0,1); glVertex3f(-1,+1,-1);
+  glEnd();
+
+  //  Top
+  glBindTexture(GL_TEXTURE_2D,texture[8]);
+  glBegin(GL_QUADS);
     glNormal3f( 0,+1, 0);
-    glTexCoord3f(-1,1,1); glVertex3f(-1,+1,+1);
-    glTexCoord3f(1,1,1); glVertex3f(+1,+1,+1);
-    glTexCoord3f(1,1,-1); glVertex3f(+1,+1,-1);
-    glTexCoord3f(-1,1,-1); glVertex3f(-1,+1,-1);
-   glEnd();
-   //  Bottom
-   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
-   glBegin(GL_QUADS);
+    glTexCoord2f(0,0); glVertex3f(-1,+1,+1);
+    glTexCoord2f(1,0); glVertex3f(+1,+1,+1);
+    glTexCoord2f(1,1); glVertex3f(+1,+1,-1);
+    glTexCoord2f(0,1); glVertex3f(-1,+1,-1);
+  glEnd();
+
+  //  Bottom
+  glBindTexture(GL_TEXTURE_2D,texture[9]);
+  glBegin(GL_QUADS);
     glNormal3f( 0,-1, 0);
-    glTexCoord3f(-1,-1,-1); glVertex3f(-1,-1,-1);
-    glTexCoord3f(1,-1,-1); glVertex3f(+1,-1,-1);
-    glTexCoord3f(1,-1,1); glVertex3f(+1,-1,+1);
-    glTexCoord3f(-1,-1,1); glVertex3f(-1,-1,+1);
-   glEnd();
-   //  Undo transformations and textures
-   glPopMatrix();
-   glDisable(GL_TEXTURE_3D);
+    glTexCoord2f(0,0); glVertex3f(-1,-1,-1);
+    glTexCoord2f(1,0); glVertex3f(+1,-1,-1);
+    glTexCoord2f(1,1); glVertex3f(+1,-1,+1);
+    glTexCoord2f(0,1); glVertex3f(-1,-1,+1);
+  glEnd();
+  //  Undo transformations and textures
+  glPopMatrix();
+  glDisable(GL_TEXTURE_2D);
 }
-
-unsigned int loadCubemap(char faces[][20])
-{
-  unsigned int textureID;
-  glGenTextures(1, &textureID);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-  int width, height, nrChannels;
-  for (unsigned int i = 0; i < 5; i++)
-  {
-      unsigned char *data = stbi_load(faces[i], &width, &height, &nrChannels, 0);
-      if (data){
-          glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
-       
-                        0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-          );
-          stbi_image_free(data);
-      }
-      else{
-          stbi_image_free(data);
-      }
-  }
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-  return textureID;
-}  
-
 
 // ----------------------------------------------------------
 // special() Callback function
@@ -415,19 +378,17 @@ void theMenu(int value){
     fov=55;
     projectionMode = 2;
   }else if(value == 3){
-    projectionMode = 3;
-  }else if(value == 4){
     if(drawAxis == true)
       drawAxis = false;
     else
       drawAxis = true;
-  }else if (value == 5){
+  }else if (value == 4){
     currentScene = 1;
-  }else if (value == 6){
+  }else if (value == 5){
     currentScene = 2;
-  }else if (value == 7){
+  }else if (value == 6){
     currentScene = 3;
-  }else if (value == 8){
+  }else if (value == 7){
     exit(0);
   }
 
@@ -1455,12 +1416,11 @@ void init(){
   glutSetMenu(menuId);
   glutAddMenuEntry("First Person", 1);
   glutAddMenuEntry("Perspective", 2);
-  glutAddMenuEntry("Orthogonal", 3);
-  glutAddMenuEntry("Axis ON/OFF", 4);
-  glutAddMenuEntry("Scene 1", 5);
-  glutAddMenuEntry("Scene 2", 6);
-  glutAddMenuEntry("Scene 3", 7);
-  glutAddMenuEntry("Quit", 8);
+  glutAddMenuEntry("Axis ON/OFF", 3);
+  glutAddMenuEntry("Scene 1", 4);
+  glutAddMenuEntry("Scene 2", 5);
+  glutAddMenuEntry("Scene 3", 6);
+  glutAddMenuEntry("Quit", 7);
 
   glLineWidth(2);
   
@@ -1496,14 +1456,10 @@ void display(){
               0,1,0); 
   }else if(projectionMode == 2){
     //  Perspective - set eye position
-    double Ex = -2*dim*Sin(th)*Cos(ph);
-    double Ey = +2*dim        *Sin(ph);
-    double Ez = +2*dim*Cos(th)*Cos(ph);
+    double Ex = -2*(dim/2)*Sin(th)*Cos(ph);
+    double Ey = +2*(dim/2)        *Sin(ph);
+    double Ez = +2*(dim/2)*Cos(th)*Cos(ph);
     gluLookAt(Ex,Ey,Ez , 0,0,0 , 0,Cos(ph),0);
-  }else if (projectionMode == 3){
-    //  Orthogonal - set world orientation 
-    glRotatef(ph, 1.0, 0.0, 0.0 );  //x coordinate
-    glRotatef(th, 0.0, 1.0, 0.0 );  //y coordinate
   }
 
   //  Flat or smooth shading
@@ -1550,9 +1506,10 @@ void display(){
   switch(currentScene){
     case 1:
       //FighterJet(0,0,0 , 1,0,0, 0,1,0, 0.5, 0, 5);
-      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 0.5, 0, 5);
-      FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, 0, 5);
-      FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, 0, 5);
+      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.5, 0, 5);
+      FighterJet(10,-5,-50 , 1,0,0, 0,1,0, 1.5, 0, 5);
+      FighterJet(10,-5,50 , 1,0,0, 0,1,0, 1.5, 0, 5);
+      cube(0,0,0,250,250,250,0);
       break;
     case 2:
       FighterJet(10,5,20, 1,0,0, 0,1,0,0.5, 25,0);
@@ -1716,6 +1673,14 @@ int main(int argc, char* argv[]){
   texture[2] = LoadTexBMP("al.bmp");
   texture[3] = LoadTexBMP("glass.bmp");
   texture[4] = LoadTexBMP("engineTexture.bmp");
+
+  //  For the skybox
+  texture[5] = LoadTexBMP("front.bmp");
+  texture[6] = LoadTexBMP("left.bmp");
+  texture[7] = LoadTexBMP("right.bmp");
+  texture[8] = LoadTexBMP("top.bmp");
+  texture[9] = LoadTexBMP("bottom.bmp");
+  texture[10] = LoadTexBMP("back.bmp");
 
   //  Pass control to GLUT for events
   glutMainLoop();

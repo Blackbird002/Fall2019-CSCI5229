@@ -17,8 +17,6 @@ void Project(double fov, double asp, double dim, int projectionMode)
     //  Perspective transformation
     gluPerspective(fov,asp,dim/4,4*dim);
   }else if (projectionMode == 3){
-    //  Orthogonal projection
-    glOrtho(-asp*dim,+asp*dim, -dim,+dim, -dim,+dim);
   }
   
   //  Switch to manipulating the model matrix
