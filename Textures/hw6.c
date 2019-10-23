@@ -20,17 +20,10 @@ Key bindings:
   Use keyboard arrow keys to spin the axis lines
   (left/right about the y axis)
   (up/down about the x axis)
-  =/+     - Decrease dim (zoom in)
-  -/_     - Increase dim (zoom out)
   z/x        Change field of view of perspective camera only
 
-  Orthogonal mode:
-  Use keyboard arrow keys to spin the axis lines
-  (left/right about the y axis)
-  (up/down about the x axis)
-
-  Perspective mode & Orthogonal mode
-  l          Toggles lighting
+  Perspective mode
+  l          Toggles lighting on/off
   a/A        Decrease/increase ambient light
   d/D        Decrease/increase diffuse light
   s/S        Decrease/increase specular light
@@ -71,9 +64,8 @@ int fov=55;       //  Field of view (for perspective)
 double asp=1;     //  Aspect ratio
 
 /*
-  1 - First person (starts with FP mode)
-  2 - Perspective
-  3 - Orthogononal
+  1 - First person 
+  2 - Perspective (starts in perspective mode)
 */
 int projectionMode = 2;     
 
@@ -129,17 +121,21 @@ static void FighterJet(double x,double y,double z,
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale, double thx, double thz);
-static void cube(double x,double y,double z,
+static void skyboxCube(double x,double y,double z,
                  double dx,double dy,double dz,
                  double th);
 
+// ----------------------------------------------------------
+// Skybox Cube
+// ----------------------------------------------------------
+
 /*
- *  Draw a cube
+ *  Draw the skybox cube
  *     at (x,y,z)
  *     dimensions (dx,dy,dz)
  *     rotated th about the y axis
  */
-static void cube(double x,double y,double z,
+static void skyboxCube(double x,double y,double z,
                  double dx,double dy,double dz,
                  double th)
 {
@@ -1314,14 +1310,6 @@ void key(unsigned char ch,int x,int y){
   if (ch == 27)
     exit(0);
 
-  //Changing Dim only allowed in Perspective
-  if(projectionMode == 2){
-      if (ch == '=' || ch == '+')
-      dim -= 1;
-    else if (ch == '-' || ch == '_')
-      dim += 1;
-  }
-
   //Moving camera only in First person & FOV
   if (projectionMode == 1){
     if(ch == 'w' || ch =='W')
@@ -1505,25 +1493,25 @@ void display(){
 
   switch(currentScene){
     case 1:
-      //FighterJet(0,0,0 , 1,0,0, 0,1,0, 0.5, 0, 5);
       XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.5, 0, 5);
+      FighterJet(-120,-5.5,0, 1,0,0, 0,1,0, 1.5, 0, 5);
       FighterJet(10,-5,-50 , 1,0,0, 0,1,0, 1.5, 0, 5);
       FighterJet(10,-5,50 , 1,0,0, 0,1,0, 1.5, 0, 5);
-      cube(0,0,0,250,250,250,0);
+      skyboxCube(0,0,0,250,250,250,0);
       break;
     case 2:
-      FighterJet(10,5,20, 1,0,0, 0,1,0,0.5, 25,0);
-      FighterJet(10,5,-20, 1,0,0, 0,1,0,0.5, -25,0);
-      FighterJet(-10,20,0, 1,0,0, 0,1,0,0.5, 0, 25);
-      XB70Bomber(20,10,0 , 1,0,0, 0,1,0,0.5, 0, 10);
-      FighterJet(20,-20,0, 1,0,0, 0,-1,0,0.5, 0, 25);
-      //XB70Bomber(-10,20,20 , 1,0,0, 0,1,0,0.5, 0, 25);
-      //XB70Bomber(-10,20,-20 , 1,0,0, 0,1,0,0.5, -25, -25);
+      FighterJet(10,5,50, 1,0,0, 0,1,0,1.5, 25,25);
+      FighterJet(10,5,-50, 1,0,0, 0,1,0,1.5, -25,25);
+      FighterJet(-10,50,0, 1,0,0, 0,1,0,1.5, 0, 25);
+      XB70Bomber(20,20,0 , 1,0,0, 0,1,0,1.5, 0, 10);
+      FighterJet(20,-40,0, 1,0,0, 0,-1,0,1.5, 0, 25);
+      skyboxCube(0,0,0,250,250,250,0);
       break;
     case 3:
-      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 0.5, THX+90, 0);
-      FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, -THX, 0);
-      FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, THX, 0);
+      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.5, THX+90, 0);
+      FighterJet(10,-5,-40 , 1,0,0, 0,1,0, 1.5, -THX, 0);
+      FighterJet(10,-5,40 , 1,0,0, 0,1,0, 1.5, THX, 0);
+      skyboxCube(0,0,0,250,250,250,0);
       break; 
   }
   
@@ -1544,8 +1532,6 @@ void display(){
     Print(" First Person  ");
   else if (projectionMode == 2)
     Print(" Perspective  ");
-  else if(projectionMode == 3)
-    Print(" Orthogonal  ");
 
   glWindowPos2i(5,85);
   if(drawAxis == true)
