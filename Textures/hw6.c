@@ -48,6 +48,7 @@ Key bindings:
 */
 
 #include "CSCIx229.h"
+#include "stb_image.h"
 
 // ----------------------------------------------------------
 // Global Variables
@@ -131,7 +132,10 @@ static void FighterJet(double x,double y,double z,
 static void XB70Bomber(double x,double y,double z,
                        double dx,double dy,double dz,
                        double ux,double uy, double uz, double scale, double thx, double thz);
-
+void cube(double x,double y,double z,
+          double dx,double dy,double dz,
+          double th);
+unsigned int loadCubemap(char faces[][20]);
 
 char cubeFaceStr[6][20] = {
   "right.jpg",
@@ -142,6 +146,91 @@ char cubeFaceStr[6][20] = {
   "back.jpg"
 };
 
+/*
+ *  Draw a cube
+ *     at (x,y,z)
+ *     dimensions (dx,dy,dz)
+ *     rotated th about the y axis
+ */
+void cube(double x,double y,double z,
+          double dx,double dy,double dz,
+          double th)
+{
+   //  Set specular color to white
+   float white[] = {1,1,1,1};
+   float Emission[]  = {0.0,0.0,0.01*emission,1.0};
+   glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shiny);
+   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,white);
+   glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
+   //  Save transformation
+   glPushMatrix();
+   //  Offset, scale and rotate
+   glTranslated(x,y,z);
+   glRotated(th,0,1,0);
+   glScaled(dx,dy,dz);
+   //  Enable textures
+   glEnable(GL_TEXTURE_3D);
+   glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,mode?GL_REPLACE:GL_MODULATE);
+   glColor3f(1,1,1);
+
+   //  Front
+   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
+   glBegin(GL_QUADS);
+    glNormal3f( 0, 0, 1);
+    glTexCoord3f(1,1,1); glVertex3f(-1,-1, 1);
+    glTexCoord3f(1,1,1); glVertex3f(+1,-1, 1);
+    glTexCoord3f(1,1,1); glVertex3f(+1,+1, 1);
+    glTexCoord3f(-1,1,1); glVertex3f(-1,+1, 1);
+   glEnd();
+   //  Back
+   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
+   glBegin(GL_QUADS);
+    glNormal3f( 0, 0,-1);
+    glTexCoord3f(1,-1,-1); glVertex3f(+1,-1,-1);
+    glTexCoord3f(-1,-1,-1); glVertex3f(-1,-1,-1);
+    glTexCoord3f(-1,1,-1); glVertex3f(-1,+1,-1);
+    glTexCoord3f(1,1,-1); glVertex3f(+1,+1,-1);
+   glEnd();
+   //  Right
+   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
+   glBegin(GL_QUADS);
+    glNormal3f(+1, 0, 0);
+    glTexCoord3f(1,-1,1); glVertex3f(+1,-1,+1);
+    glTexCoord3f(1,-1,-1); glVertex3f(+1,-1,-1);
+    glTexCoord3f(1,1,-1); glVertex3f(+1,+1,-1);
+    glTexCoord3f(1,1,1); glVertex3f(+1,+1,+1);
+    glEnd();
+   //  Left
+   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
+   glBegin(GL_QUADS);
+    glNormal3f(-1, 0, 0);
+    glTexCoord3f(-1,-1,-1); glVertex3f(-1,-1,-1);
+    glTexCoord3f(-1,-1,1); glVertex3f(-1,-1,+1);
+    glTexCoord3f(-1,1,1); glVertex3f(-1,+1,+1);
+    glTexCoord3f(-1,1,-1); glVertex3f(-1,+1,-1);
+   glEnd();
+   //  Top
+   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
+   glBegin(GL_QUADS);
+    glNormal3f( 0,+1, 0);
+    glTexCoord3f(-1,1,1); glVertex3f(-1,+1,+1);
+    glTexCoord3f(1,1,1); glVertex3f(+1,+1,+1);
+    glTexCoord3f(1,1,-1); glVertex3f(+1,+1,-1);
+    glTexCoord3f(-1,1,-1); glVertex3f(-1,+1,-1);
+   glEnd();
+   //  Bottom
+   glBindTexture(GL_TEXTURE_3D,loadCubemap(cubeFaceStr));
+   glBegin(GL_QUADS);
+    glNormal3f( 0,-1, 0);
+    glTexCoord3f(-1,-1,-1); glVertex3f(-1,-1,-1);
+    glTexCoord3f(1,-1,-1); glVertex3f(+1,-1,-1);
+    glTexCoord3f(1,-1,1); glVertex3f(+1,-1,+1);
+    glTexCoord3f(-1,-1,1); glVertex3f(-1,-1,+1);
+   glEnd();
+   //  Undo transformations and textures
+   glPopMatrix();
+   glDisable(GL_TEXTURE_3D);
+}
 
 unsigned int loadCubemap(char faces[][20])
 {
@@ -152,17 +241,15 @@ unsigned int loadCubemap(char faces[][20])
   int width, height, nrChannels;
   for (unsigned int i = 0; i < 5; i++)
   {
-      unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
-      if (data)
-      {
+      unsigned char *data = stbi_load(faces[i], &width, &height, &nrChannels, 0);
+      if (data){
           glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+       
                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
           );
           stbi_image_free(data);
       }
-      else
-      {
-          std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+      else{
           stbi_image_free(data);
       }
   }
@@ -1198,39 +1285,47 @@ void XB70Bomber(double x,double y,double z,
 
   //  Front Nose (4 sided)
   glColor3f(0.7,0.7,0.7);
-  glBindTexture(GL_TEXTURE_2D,texture[0]);
-  glBegin(GL_TRIANGLES);
+  glBindTexture(GL_TEXTURE_2D,texture[2]);
     
-    //left side nose
+    //Right side nose
+  glBegin(GL_TRIANGLES);
     findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipFrontNoseX, 0.0,0.0, &aX,&aY,&aZ);
     findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipRearNoseX, -shipFuselageHeight, shipWidth, &bX, &bY, &bZ);
     findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
     glNormal3d(nX,nY,-nZ);
-    glVertex3d(shipFrontNoseX, 0.0, 0.0);
-    glVertex3d(shipRearNoseX, shipFuselageHeight, shipWidth);
-    glVertex3d(shipRearNoseX,-shipFuselageHeight, shipWidth);
+    glTexCoord2f(0.5,0.5);glVertex3d(shipFrontNoseX, 0.0, 0.0);
+    glTexCoord2f(0,0.5);glVertex3d(shipRearNoseX, shipFuselageHeight, shipWidth);
+    glTexCoord2f(0,0);glVertex3d(shipRearNoseX,-shipFuselageHeight, shipWidth);
+  glEnd();
 
     //Right side nose
+  glBegin(GL_TRIANGLES);
     glNormal3d(nX,nY,nZ);
-    glVertex3d(shipFrontNoseX, 0.0, 0.0);
-    glVertex3d(shipRearNoseX, shipFuselageHeight,-shipWidth);
-    glVertex3d(shipRearNoseX,-shipFuselageHeight,-shipWidth);
+    glTexCoord2f(0.5,0.5);glVertex3d(shipFrontNoseX, 0.0, 0.0);
+    glTexCoord2f(0,0.5);glVertex3d(shipRearNoseX, shipFuselageHeight,-shipWidth);
+    glTexCoord2f(0,0);glVertex3d(shipRearNoseX,-shipFuselageHeight,-shipWidth);
+  glEnd();
 
     //Top side nose
+  glBegin(GL_TRIANGLES);
     findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipFrontNoseX, 0.0,0.0, &aX,&aY,&aZ);
     findDispVector(shipRearNoseX, shipFuselageHeight, shipWidth, shipRearNoseX, shipFuselageHeight, -shipWidth, &bX,&bY,&bZ);
     findNormalVector(aX,aY,aZ,bX,bY,bZ,&nX,&nY,&nZ);
+  glEnd();
 
+  glBegin(GL_TRIANGLES);
     glNormal3d(nX,nY,nZ);
-    glVertex3d(shipFrontNoseX, 0.0, 0.0);
-    glVertex3d(shipRearNoseX, shipFuselageHeight, shipWidth);
-    glVertex3d(shipRearNoseX, shipFuselageHeight,-shipWidth);
+    glTexCoord2f(0.5,0.5);glVertex3d(shipFrontNoseX, 0.0, 0.0);
+    glTexCoord2f(0,0.5);glVertex3d(shipRearNoseX, shipFuselageHeight, shipWidth);
+    glTexCoord2f(0,0);glVertex3d(shipRearNoseX, shipFuselageHeight,-shipWidth);
+  glEnd();
 
     //Bottom side nose3
+  glBegin(GL_TRIANGLES);
     glNormal3d(nX,-nY,nZ);
-    glVertex3d(shipFrontNoseX, 0.0, 0.0);
-    glVertex3d(shipRearNoseX,-shipFuselageHeight, shipWidth);
-    glVertex3d(shipRearNoseX,-shipFuselageHeight,-shipWidth);
+    glTexCoord2f(0.5,0.5);glVertex3d(shipFrontNoseX, 0.0, 0.0);
+    glTexCoord2f(0,0.5);glVertex3d(shipRearNoseX,-shipFuselageHeight, shipWidth);
+    glTexCoord2f(0,0);glVertex3d(shipRearNoseX,-shipFuselageHeight,-shipWidth);
   glEnd();
   
   // ----------------------------------------------------------
@@ -1755,6 +1850,7 @@ void display(){
       FighterJet(10,-5,-15 , 1,0,0, 0,1,0, 0.5, 0, 5);
       FighterJet(10,-5,15 , 1,0,0, 0,1,0, 0.5, 0, 5);
       //ArtemisSpaceBomber(0,8,0 , 1,0,0, 0,1,0, 0.5, 0, 0);
+      //cube(0,0,0,2,2,2,0);
       break;
     case 2:
       FighterJet(10,5,20, 1,0,0, 0,1,0,0.5, 25,0);

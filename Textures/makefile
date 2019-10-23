@@ -30,9 +30,10 @@ print.o: print.c CSCIx229.h
 project.o: project.c CSCIx229.h
 errcheck.o: errcheck.c CSCIx229.h
 object.o: object.c CSCIx229.h
+stb_image.o: stb_image.c stb_image.h
 
 #  Create archive
-CSCIx229.a:fatal.o loadtexbmp.o print.o project.o errcheck.o object.o
+CSCIx229.a:fatal.o loadtexbmp.o print.o project.o errcheck.o object.o stb_image.o
 	ar -rcs $@ $^
 
 # Compile rules
