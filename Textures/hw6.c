@@ -30,7 +30,7 @@ Key bindings:
   e/E        Decrease/increase emitted light
   n/N        Decrease/increase shininess
   F1         Toggle smooth/flat shading
-  F2         Toggle local viewer mode
+  F2         F3 local viewer mode
   F3         Toggle light distance (1/5)
   F8         Change ball increment
   F9         Invert bottom normal
@@ -54,12 +54,9 @@ double cameraX=50, cameraY =10 , cameraZ=25;
 
 int th=321;         //  Azimuth of view angle (y)
 int ph=29;         //  Elevation of view angle (x)
-
 double dim=150;   // Dimension of orthogonal box
-double PI = 3.14159;
 int currentScene = 1;
-bool drawAxis = true;
-
+bool drawAxis = false;
 int fov=55;       //  Field of view (for perspective)
 double asp=1;     //  Aspect ratio
 
@@ -74,9 +71,9 @@ double THZ;
 double time;
 
 // Light values
-int light     =   1;  //  Lighting
+int light     =   0;  //  Lighting
 int one       =   1;  // Unit value
-int distance  =  50; // Light distance
+int distance  =  70; // Light distance
 int inc       =  10;  // Ball increment
 int smooth    =   1;  // Smooth/Flat shading
 int local     =   0;  // Local Viewer Model
@@ -252,7 +249,7 @@ static void special(int k,int x,int y)
   else if (k == GLUT_KEY_F2)
     local = 1-local;
   else if (k == GLUT_KEY_F3)
-    distance = (distance==10) ? 20 : 10;
+    distance = (distance==70) ? 50 : 70;
   //  Toggle ball increment
   else if (k == GLUT_KEY_F8)
     inc = (inc==10)?3:10;
@@ -703,7 +700,7 @@ static void FighterJet(double x,double y,double z,
   // ----------------------------------------------------------
   // Cockpit
   // ---------------------------------------------------------
-  glColor3f(0.5,0.5,1);
+  glColor3f(1,1,1);
   glBindTexture(GL_TEXTURE_2D,texture[3]);
   Sphere(cockpitX,cockpitY,0,0.9);
 
@@ -1294,7 +1291,7 @@ void XB70Bomber(double x,double y,double z,
   // ----------------------------------------------------------
   // Cockpit
   // ----------------------------------------------------------
-  glColor3f(0.5,0.5,1);
+  glColor3f(1,1,1);
   glBindTexture(GL_TEXTURE_2D,texture[3]);
   Sphere(cockpitLocX,shipFuselageHeight - 0.8,0,shipWidth - 0.25);
 
@@ -1493,24 +1490,27 @@ void display(){
 
   switch(currentScene){
     case 1:
-      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.5, 0, 5);
-      FighterJet(-120,-5.5,0, 1,0,0, 0,1,0, 1.5, 0, 5);
-      FighterJet(10,-5,-50 , 1,0,0, 0,1,0, 1.5, 0, 5);
-      FighterJet(10,-5,50 , 1,0,0, 0,1,0, 1.5, 0, 5);
+      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.6, 0, 5);
+      FighterJet(-120,-5.5,0, 1,0,0, 0,1,0, 1.6, 0, 5);
+      FighterJet(10,-5,-50 , 1,0,0, 0,1,0, 1.6, 0, 5);
+      FighterJet(10,-5,50 , 1,0,0, 0,1,0, 1.6, 0, 5);
+      FighterJet(-40,-5,90 , 1,0,0, 0,1,0, 1.6, 0, 5);
+       FighterJet(-40,-5,-90 , 1,0,0, 0,1,0, 1.6, 0, 5);
+      FighterJet(90,20,0, 1,0,0, 0,1,0, 1.6, 0, 5);
       skyboxCube(0,0,0,250,250,250,0);
       break;
     case 2:
-      FighterJet(10,5,50, 1,0,0, 0,1,0,1.5, 25,25);
-      FighterJet(10,5,-50, 1,0,0, 0,1,0,1.5, -25,25);
-      FighterJet(-10,50,0, 1,0,0, 0,1,0,1.5, 0, 25);
-      XB70Bomber(20,20,0 , 1,0,0, 0,1,0,1.5, 0, 10);
-      FighterJet(20,-40,0, 1,0,0, 0,-1,0,1.5, 0, 25);
+      FighterJet(10,5,50, 1,0,0, 0,1,0,1.6, 25,25);
+      FighterJet(10,5,-50, 1,0,0, 0,1,0,1.6, -25,25);
+      FighterJet(-10,50,0, 1,0,0, 0,1,0,1.6, 0, 25);
+      XB70Bomber(20,20,0 , 1,0,0, 0,1,0,1.6, 0, 10);
+      FighterJet(20,-40,0, 1,0,0, 0,-1,0,1.6, 0, 25);
       skyboxCube(0,0,0,250,250,250,0);
       break;
     case 3:
-      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.5, THX+90, 0);
-      FighterJet(10,-5,-40 , 1,0,0, 0,1,0, 1.5, -THX, 0);
-      FighterJet(10,-5,40 , 1,0,0, 0,1,0, 1.5, THX, 0);
+      XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.6, THX+90, 0);
+      FighterJet(10,-5,-40 , 1,0,0, 0,1,0, 1.6, -THX, 0);
+      FighterJet(10,-5,40 , 1,0,0, 0,1,0, 1.6, THX, 0);
       skyboxCube(0,0,0,250,250,250,0);
       break; 
   }
@@ -1599,7 +1599,6 @@ void drawAxisLabels(){
 
 // This function is called by GLUT when idle
 void idle(){
-  
   time = glutGet(GLUT_ELAPSED_TIME)/1000.0;
   THX = fmod(60*time,360);
   THZ = fmod(60*time,360);
@@ -1632,7 +1631,7 @@ int main(int argc, char* argv[]){
   // Set window position 
   // Center of Screen -> (source: Kornel Kisielewicz StackOverflow)
   glutInitWindowPosition((glutGet(GLUT_SCREEN_WIDTH)-1280)/2,
-                       (glutGet(GLUT_SCREEN_HEIGHT)-720)/2);
+                         (glutGet(GLUT_SCREEN_HEIGHT)-720)/2);
 
   // Set window size
   glutInitWindowSize(1280,720);
