@@ -86,7 +86,7 @@ float shiny   =   1;  // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
 int move      =   1;  //  Move light
-unsigned int texture[11]; // Texture names
+unsigned int texture[12]; // Texture names
 
 //Texture settings
 int mode=0;       //  Texture mode
@@ -121,6 +121,43 @@ static void XB70Bomber(double x,double y,double z,
 static void skyboxCube(double x,double y,double z,
                  double dx,double dy,double dz,
                  double th);
+static void disk(double x,double y,double z,double r, double th);
+
+// ----------------------------------------------------------
+
+// ----------------------------------------------------------
+// disk
+// ----------------------------------------------------------
+
+/*
+ *  Draw a disk at (x,y,z) radius r
+ *  The resolution is fixed at 36 slices (10 degrees each)
+ */
+static void disk(double x,double y,double z,double r, double th)
+{
+  glEnable(GL_TEXTURE_2D);
+  //  Save transformation
+  glPushMatrix();
+  //  Offset and scale
+  glTranslated(x,y,z);
+   glRotated(th,0,1,0);
+  glScaled(r,r,r);
+  //  Head & Tail
+  glColor3f(1,1,1);
+  glNormal3f(0,0,-1);
+  glBegin(GL_TRIANGLE_FAN);
+  glTexCoord2f(0.5,0.5);
+  glVertex3f(0,0,1);
+  for(int k=0;k<=360;k+=10){
+    glTexCoord2f(0.5*Cos(k)+0.5,0.5*Sin(k)+0.5);
+    glVertex3f(Cos(k),Sin(k),1);
+  }
+  glEnd();
+  //  Undo transformations
+  glPopMatrix();
+  glDisable(GL_TEXTURE_2D);
+}
+
 
 // ----------------------------------------------------------
 // Skybox Cube
@@ -833,6 +870,9 @@ static void FighterJet(double x,double y,double z,
   glBindTexture(GL_TEXTURE_2D,texture[4]);
   engineSphere(shipSternX,0,0,1,-90);
 
+  glBindTexture(GL_TEXTURE_2D,texture[11]);
+  disk(shipSternX-1-0.01,0,0,1,90);
+
   //  Undo transformations
   glPopMatrix();
 }
@@ -1495,7 +1535,7 @@ void display(){
       FighterJet(10,-5,-50 , 1,0,0, 0,1,0, 1.6, 0, 5);
       FighterJet(10,-5,50 , 1,0,0, 0,1,0, 1.6, 0, 5);
       FighterJet(-40,-5,90 , 1,0,0, 0,1,0, 1.6, 0, 5);
-       FighterJet(-40,-5,-90 , 1,0,0, 0,1,0, 1.6, 0, 5);
+      FighterJet(-40,-5,-90 , 1,0,0, 0,1,0, 1.6, 0, 5);
       FighterJet(90,20,0, 1,0,0, 0,1,0, 1.6, 0, 5);
       skyboxCube(0,0,0,250,250,250,0);
       break;
@@ -1511,6 +1551,7 @@ void display(){
       XB70Bomber(10,-5,0 , 1,0,0, 0,1,0, 1.6, THX+90, 0);
       FighterJet(10,-5,-40 , 1,0,0, 0,1,0, 1.6, -THX, 0);
       FighterJet(10,-5,40 , 1,0,0, 0,1,0, 1.6, THX, 0);
+      FighterJet(10,30,0 , 1,0,0, 0,1,0, 1.6, 0, THX);
       skyboxCube(0,0,0,250,250,250,0);
       break; 
   }
@@ -1666,6 +1707,9 @@ int main(int argc, char* argv[]){
   texture[8] = LoadTexBMP("top.bmp");
   texture[9] = LoadTexBMP("bottom.bmp");
   texture[10] = LoadTexBMP("back.bmp");
+
+  //Afterburner texture from: http://www.lockonfiles.com/files/file/1967-gys-f-15c-inner-afterburner-texture/
+  texture[11] = LoadTexBMP("imageBurner.bmp");
 
   //  Pass control to GLUT for events
   glutMainLoop();
