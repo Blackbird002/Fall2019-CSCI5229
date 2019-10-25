@@ -12,10 +12,10 @@ void Project(double fov, double asp, double dim, int projectionMode)
 
   if(projectionMode == 1){
     //  First person
-    gluPerspective(fov,asp,dim/6,10*dim);
+    gluPerspective(fov,asp,dim/15,10*dim);
   }if (projectionMode == 2){
     //  Perspective transformation
-    gluPerspective(fov,asp,dim/4,4*dim);
+    gluPerspective(fov,asp,dim/20,4*dim);
   }else if (projectionMode == 3){
   }
   
